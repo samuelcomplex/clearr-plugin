@@ -114,7 +114,9 @@ If you enter your Sonarr URL and API key in Settings, the plugin unmonitors what
 
 - **A season**: that season is unmonitored.
 - **A whole show**: every existing season is unmonitored. The show itself **stays monitored**, so future seasons still download, as long as the show's *Monitor New Seasons* setting in Sonarr is *All*.
-- If Sonarr can't be reached, **nothing is deleted** and the History tab shows *Failed*.
+- If Sonarr is set up but can't be reached, or rejects the request, **nothing is deleted** and the History tab shows *Failed*.
+- If Sonarr is **not** set up (no URL or API key, or *Unmonitor in Sonarr* is unticked), this step is skipped and deletion goes ahead. Sonarr then still monitors those episodes, and may download them again.
+- Shows that aren't in Sonarr, or have no TVDB id in Jellyfin, are deleted without touching Sonarr. History notes this.
 
 *Test Sonarr* checks the URL and key as typed. You don't need to save first. The URL works with or without `http://`.
 
