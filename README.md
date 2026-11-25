@@ -21,6 +21,10 @@ One package works on both 10.11 and 12.x.
 - **Safety first**: it starts in Dry run mode, shows sizes before anything is deleted, and has a per-run size limit and a full history log.
 - **Sonarr integration**: deleted seasons are unmonitored so they aren't downloaded again, while future seasons keep coming.
 
+![Progress tab: each show with every viewer's status, flags and cleanup readiness](docs/screenshots/progress.png)
+
+*The Progress tab. Green chips are finished viewers, blue are still watching and orange are flagged. Click a show to see its seasons and why each one is or isn't ready to remove.*
+
 ## Install
 
 ### From the plugin repository (recommended)
@@ -54,6 +58,10 @@ The plugin starts in **Dry run** mode. **Nothing is ever deleted unless *Cleanup
 - **History** records every deletion, dry-run hit and failure, with sizes.
 
 Recommended: leave it in Dry run for a week or so, check the History tab and mark anything you want to hold onto as **Keep**. Then switch to Delete.
+
+![Preview cleanup: list of what would be deleted, with sizes and a total](docs/screenshots/preview.png)
+
+*Preview cleanup lists each item, its size and why it qualifies. Anything over the per-run limit is listed separately and waits for the next run.*
 
 ## How it decides
 
@@ -122,6 +130,8 @@ If you enter your Sonarr URL and API key in Settings, the plugin unmonitors what
 
 ## Settings reference
 
+![Settings tab](docs/screenshots/settings.png)
+
 | Setting | Default | What it does |
 |---|---|---|
 | Cleanup mode | Dry run | Off / Dry run / Delete. Applies to the scheduled task and the button |
@@ -146,6 +156,10 @@ If you enter your Sonarr URL and API key in Settings, the plugin unmonitors what
 - **Settings tab**: everything in the table above.
 - **History tab**: what was deleted (or would have been), when, how big it was, and why.
 - **Dashboard → Scheduled Tasks → Watch Tracker → Clean up finished shows**: runs daily at 04:00. You can change the time there.
+
+![History tab: deletions, dry-run entries and failures with sizes and reasons](docs/screenshots/history.png)
+
+*The screenshots use made-up demo data ([`docs/screenshots/demo-data.json`](docs/screenshots/demo-data.json)).*
 
 ## Building
 
