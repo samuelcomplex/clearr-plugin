@@ -9,7 +9,10 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework Condition="'$(UseStubs)' != 'true'">net10.0</TargetFramework>
+    <!-- Override from the command line, e.g. -p:JellyfinVersion=10.11.* -p:JellyfinTargetFramework=net9.0 -->
+    <JellyfinVersion Condition="'$(JellyfinVersion)' == ''">12.4.0</JellyfinVersion>
+    <JellyfinTargetFramework Condition="'$(JellyfinTargetFramework)' == ''">net10.0</JellyfinTargetFramework>
+    <TargetFramework Condition="'$(UseStubs)' != 'true'">$(JellyfinTargetFramework)</TargetFramework>
     <TargetFramework Condition="'$(UseStubs)' == 'true'">net8.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.WatchTracker</RootNamespace>
     <AssemblyVersion>1.2.2.0</AssemblyVersion>
@@ -26,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseStubs)' != 'true'">
-    <PackageReference Include="Jellyfin.Controller" Version="12.0.0">
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
