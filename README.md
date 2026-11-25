@@ -1,5 +1,7 @@
 # Watch Tracker – Jellyfin plugin
 
+[![Compatibility check](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml)
+
 ![Watch Tracker](docs/logo/logo.png)
 
 Tracks who has started each TV show and season, and who has finished it. It flags viewers who gave up, and can delete seasons or whole shows once everyone who started them has finished.
@@ -13,6 +15,18 @@ Tracks who has started each TV show and season, and who has finished it. It flag
 | 10.10 and older | ❌ Not supported |
 
 One package works on both 10.11 and 12.x.
+
+### Staying compatible
+
+A [compatibility check](.github/workflows/compatibility.yml) runs every Monday, on every change, and on demand from the **Actions** tab. It:
+
+- builds the plugin against the official Jellyfin packages for **10.11**, the newest **12.x** and the **newest release overall**, so a new major version is tested automatically
+- runs the logic tests
+- starts a real **Sonarr**, adds a show, and checks that the plugin's unmonitor calls still work, including that the show stays monitored
+
+Jellyfin pre-releases and Sonarr's `develop` (currently the v5 beta) are also tested as an early warning. They don't fail the run.
+
+If a required check fails, the workflow opens a **"Compatibility check failed"** issue in this repo, which GitHub emails to the owner.
 
 ## Features
 
