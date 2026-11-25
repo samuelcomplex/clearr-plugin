@@ -66,8 +66,9 @@
                     <input id="wtSearch" type="search" placeholder="Search shows" />
                     <button is="emby-button" type="button" class="raised button-alt" id="wtRefresh"><span>Refresh</span></button>
                     <button is="emby-button" type="button" class="raised" id="wtPreview"><span>Preview cleanup</span></button>
-                    <button is="emby-button" type="button" class="raised button-delete" id="wtDeleteNow"><span>Delete eligible now</span></button>
+                    <button is="emby-button" type="button" class="raised button-delete" id="wtDeleteNow" disabled><span>Delete eligible now</span></button>
                 </div>
+                <div id="wtModeNote" class="fieldDescription" style="margin:-.4em 0 1em"></div>
                 <div id="wtResult" class="wt-result"></div>
                 <div id="wtSummary" class="wt-summary">Loading…</div>
                 <div id="wtList"></div>
@@ -79,12 +80,18 @@
                     <div class="wt-section">Cleanup</div>
 
                     <div class="selectContainer">
-                        <label class="selectLabel" for="Mode">Scheduled cleanup (runs daily, see Scheduled Tasks)</label>
+                        <label class="selectLabel" for="Mode">Cleanup mode</label>
                         <select is="emby-select" id="Mode" class="emby-select-withcolor emby-select">
                             <option value="Off">Off – only track and flag</option>
                             <option value="DryRun">Dry run – log what would be deleted</option>
                             <option value="Delete">Delete – remove files</option>
                         </select>
+                        <div class="fieldDescription">Applies to everything: the daily scheduled task and the "Delete eligible now" button. Nothing is ever deleted unless this is set to Delete.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MaxDeleteGbPerRun">Max GB deleted per run (0 = no limit)</label>
+                        <input is="emby-input" type="number" id="MaxDeleteGbPerRun" min="0" />
+                        <div class="fieldDescription">Anything over the limit waits for the next run.</div>
                     </div>
 
                     <div class="checkboxContainer checkboxContainer-withDescription">
@@ -178,13 +185,29 @@
         var openIds = {};
 
         var boolFields = ['DeleteSeasons', 'DeleteSeries', 'RequireEndedForSeriesDelete', 'ProtectLatestSeasonOfContinuing', 'IncludeSpecials', 'AbandonedUsersBlockCleanup', 'ApplyFlagTags', 'UnmonitorInSonarr'];
-        var numFields = ['GraceDays', 'InactiveDays', 'SampledMaxEpisodes'];
+        var numFields = ['GraceDays', 'InactiveDays', 'SampledMaxEpisodes', 'MaxDeleteGbPerRun'];
+        var savedMode = 'DryRun';
         var textFields = ['KeepTag', 'FlagTagPrefix', 'SonarrUrl', 'SonarrApiKey'];
         var modeNames = ['Off', 'DryRun', 'Delete'];
 
         function $(sel) { return page.querySelector(sel); }
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
         function fmtDate(d) { if (!d) return ''; var x = new Date(d); return isNaN(x) ? '' : x.toLocaleDateString(); }
+
+        function fmtSize(b) {
+            if (!b) return '0 GB';
+            var gb = b / 1073741824;
+            return gb >= 1 ? gb.toFixed(gb >= 100 ? 0 : 1) + ' GB' : Math.max(1, Math.round(b / 1048576)) + ' MB';
+        }
+
+        function setMode(mode) {
+            savedMode = mode;
+            var btn = $('#wtDeleteNow');
+            btn.disabled = mode !== 'Delete';
+            $('#wtModeNote').textContent = mode === 'Delete'
+                ? 'Cleanup mode is Delete: "Delete eligible now" removes files immediately after you confirm.'
+                : 'Cleanup mode is ' + (mode === 'Off' ? 'Off' : 'Dry run') + ', so nothing can be deleted. "Preview cleanup" shows what would go.';
+        }
 
         function api(path, method, body) {
             var headers = { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' };
@@ -194,8 +217,8 @@
                 headers: headers,
                 body: body !== undefined ? JSON.stringify(body) : undefined
             }).then(function (r) {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
+                if (r.ok) return r.json();
+                return r.json().catch(function () { return {}; }).then(function (j) { throw new Error(j.error || ('HTTP ' + r.status)); });
             });
         }
 
@@ -285,15 +308,21 @@
                 .catch(function (e) { $('#wtSummary').textContent = 'Could not load report: ' + e.message; });
         }
 
+        function actionLine(a) {
+            return esc(a.seriesName) + (a.seasonName ? ' – ' + esc(a.seasonName) : ' (whole show)') + ' · ' + fmtSize(a.bytes);
+        }
+
         function showResult(res) {
             var box = $('#wtResult');
             box.style.display = 'block';
             if (!res.actions.length) { box.innerHTML = 'Nothing is eligible for cleanup right now.'; return; }
-            box.innerHTML = '<b>' + (res.dryRun ? 'Would delete' : 'Result') + ' (' + res.actions.length + '):</b><ul>' +
-                res.actions.map(function (a) {
-                    return '<li>' + (res.dryRun ? '' : '<b>' + esc(a.action) + '</b> ') + esc(a.seriesName) + (a.seasonName ? ' – ' + esc(a.seasonName) : ' (whole show)') +
-                        ' <span class="wt-sub">' + esc(a.detail) + '</span></li>';
-                }).join('') + '</ul>';
+            var main = res.actions.filter(function (a) { return a.action !== 'Skipped'; });
+            var skipped = res.actions.filter(function (a) { return a.action === 'Skipped'; });
+            box.innerHTML = '<b>' + (res.dryRun ? 'Would delete' : 'Result') + ': ' + main.length + ' item(s), ' + fmtSize(res.totalBytes) + '</b><ul>' +
+                main.map(function (a) {
+                    return '<li>' + (res.dryRun ? '' : '<b>' + esc(a.action) + '</b> ') + actionLine(a) + ' <span class="wt-sub">' + esc(a.detail) + '</span></li>';
+                }).join('') + '</ul>' +
+                (skipped.length ? '<div class="wt-sub">Held back by the per-run limit (' + skipped.length + '): ' + skipped.map(actionLine).join('; ') + '</div>' : '');
         }
 
         $('#wtFilter').addEventListener('change', renderReport);
@@ -306,23 +335,33 @@
                 .finally(function () { Dashboard.hideLoadingMsg(); });
         });
         $('#wtDeleteNow').addEventListener('click', function () {
-            if (!window.confirm('Delete every eligible season and show now? Files are removed from disk and this cannot be undone.')) return;
+            if (savedMode !== 'Delete') return;
             Dashboard.showLoadingMsg();
-            api('WatchTracker/Cleanup?dryRun=false', 'POST').then(function (res) { showResult(res); return loadReport(); })
-                .catch(function (e) { Dashboard.alert('Cleanup failed: ' + e.message); })
-                .finally(function () { Dashboard.hideLoadingMsg(); });
+            api('WatchTracker/Cleanup?dryRun=true', 'POST').then(function (preview) {
+                Dashboard.hideLoadingMsg();
+                showResult(preview);
+                var items = preview.actions.filter(function (a) { return a.action === 'WouldDelete'; });
+                if (!items.length) return null;
+                var list = items.slice(0, 25).map(function (a) { return '• ' + a.seriesName + (a.seasonName ? ' – ' + a.seasonName : ' (whole show)') + ' · ' + fmtSize(a.bytes); }).join('\n');
+                if (items.length > 25) list += '\n… and ' + (items.length - 25) + ' more';
+                var msg = 'PERMANENTLY delete ' + items.length + ' item(s), ' + fmtSize(preview.totalBytes) + ' from disk?\n\n' + list + '\n\nThis cannot be undone.';
+                if (!window.confirm(msg)) return null;
+                Dashboard.showLoadingMsg();
+                return api('WatchTracker/Cleanup?dryRun=false', 'POST').then(function (res) { showResult(res); return loadReport(); });
+            }).catch(function (e) { Dashboard.alert(e.message); })
+              .finally(function () { Dashboard.hideLoadingMsg(); });
         });
 
         // ---------- history ----------
         function loadHistory() {
             api('WatchTracker/History').then(function (list) {
                 if (!list.length) { $('#wtHistory').innerHTML = '<p class="wt-muted">No cleanup has run yet.</p>'; return; }
-                $('#wtHistory').innerHTML = '<table class="wt-table"><thead><tr><th>When</th><th>Action</th><th>What</th><th>Detail</th></tr></thead><tbody>' +
+                $('#wtHistory').innerHTML = '<table class="wt-table"><thead><tr><th>When</th><th>Action</th><th>What</th><th>Size</th><th>Detail</th></tr></thead><tbody>' +
                     list.map(function (h) {
                         var cls = h.action === 'Failed' ? 'wt-bad' : (h.action === 'Deleted' ? 'wt-ok' : '');
                         var label = h.action === 'WouldDelete' ? 'Would delete (dry run)' : h.action;
                         return '<tr><td>' + esc(new Date(h.date).toLocaleString()) + '</td><td class="' + cls + '">' + esc(label) + '</td><td>' +
-                            esc(h.seriesName) + (h.seasonName ? ' – ' + esc(h.seasonName) : ' (whole show)') + '</td><td class="wt-reason">' + esc(h.detail) + '</td></tr>';
+                            esc(h.seriesName) + (h.seasonName ? ' – ' + esc(h.seasonName) : ' (whole show)') + '</td><td>' + (h.bytes ? fmtSize(h.bytes) : '') + '</td><td class="wt-reason">' + esc(h.detail) + '</td></tr>';
                     }).join('') + '</tbody></table>';
             }).catch(function (e) { $('#wtHistory').textContent = 'Could not load history: ' + e.message; });
         }
@@ -334,6 +373,7 @@
                 var c = res[0], users = res[1];
                 var mode = typeof c.Mode === 'number' ? modeNames[c.Mode] : c.Mode;
                 $('#Mode').value = mode || 'DryRun';
+                setMode($('#Mode').value);
                 boolFields.forEach(function (f) { $('#' + f).checked = !!c[f]; });
                 numFields.forEach(function (f) { $('#' + f).value = c[f]; });
                 textFields.forEach(function (f) { $('#' + f).value = c[f] || ''; });
@@ -357,6 +397,7 @@
                 c.ExcludedUserIds = Array.prototype.map.call(page.querySelectorAll('.wt-exclude:checked'), function (x) { return x.getAttribute('data-id'); });
                 return ApiClient.updatePluginConfiguration(pluginId, c);
             }).then(function (r) {
+                setMode($('#Mode').value);
                 Dashboard.processPluginConfigurationUpdateResult(r);
                 loadReport();
             });

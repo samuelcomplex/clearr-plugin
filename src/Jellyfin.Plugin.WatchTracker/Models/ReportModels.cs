@@ -112,11 +112,18 @@ public class HistoryEntry
     public string? SeasonName { get; set; }
 
     public string Detail { get; set; } = string.Empty;
+
+    /// <summary>Size on disk of what was (or would be) deleted.</summary>
+    public long Bytes { get; set; }
 }
 
 public class CleanupResult
 {
     public bool DryRun { get; set; }
+
+    public long TotalBytes { get; set; }
+
+    public string? Error { get; set; }
 
     public List<HistoryEntry> Actions { get; set; } = new();
 }

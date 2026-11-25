@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.WatchTracker.Configuration;
+using Jellyfin.Plugin.WatchTracker.Models;
 using Jellyfin.Plugin.WatchTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,10 +35,18 @@ public class WatchTrackerController : ControllerBase
     [HttpGet("History")]
     public ActionResult GetHistory() => Json(_history.GetAll());
 
-    /// <summary>dryRun=true previews; dryRun=false deletes now (regardless of the scheduled mode).</summary>
+    /// <summary>dryRun=true previews. dryRun=false deletes now, but ONLY when the mode is set to Delete.</summary>
     [HttpPost("Cleanup")]
     public async Task<ActionResult> RunCleanup([FromQuery] bool dryRun = true, CancellationToken ct = default)
     {
+        var mode = Plugin.Instance?.Configuration.Mode ?? CleanupMode.DryRun;
+        if (!dryRun && mode != CleanupMode.Delete)
+        {
+            var refused = Json(new CleanupResult { DryRun = true, Error = $"Nothing was deleted: cleanup mode is {mode}. Set the mode to Delete and save before deleting." });
+            refused.StatusCode = 409;
+            return refused;
+        }
+
         var result = await _cleanup.RunAsync(dryRun, record: !dryRun, null, ct).ConfigureAwait(false);
         return Json(result);
     }

@@ -35,6 +35,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Days to wait after the last viewer finished before deleting.</summary>
     public int GraceDays { get; set; } = 7;
 
+    /// <summary>Most data one run may delete, in GB (0 = no limit). The rest waits for the next run.</summary>
+    public int MaxDeleteGbPerRun { get; set; } = 50;
+
     /// <summary>Tag on a series that blocks all cleanup for it (case-insensitive).</summary>
     public string KeepTag { get; set; } = "keep";
 

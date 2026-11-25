@@ -2,7 +2,7 @@
 
 Tracks who has started each TV show and season, and who has finished it. It flags viewers who gave up, and can delete seasons or whole shows once everyone who started them has finished.
 
-Built for **Jellyfin 10.11.x**.
+Built for **Jellyfin 12.x** (the API it uses is identical in 10.11).
 
 ## Install from repository (recommended)
 
@@ -21,7 +21,7 @@ Jellyfin installs updates from the same place.
    - Windows install: `%ProgramData%\Jellyfin\Server\plugins\`
 3. Start Jellyfin. **Watch Tracker** now appears in the dashboard side menu and under Dashboard → Plugins.
 
-The plugin starts in **Dry run** mode, so nothing is deleted until you choose **Delete** in Settings.
+The plugin starts in **Dry run** mode. **Nothing is ever deleted unless Cleanup mode is set to Delete.** That applies to both the scheduled task and the **Delete eligible now** button, which stays greyed out in other modes, and the server refuses deletion requests too.
 
 ## How it decides
 
@@ -53,6 +53,11 @@ Specials (season 0) are ignored unless enabled. They go when the whole show goes
 
 ## Deleting
 
+- **Cleanup mode** controls everything. In Off or Dry run, the server refuses every deletion request, whichever button or request asks for it.
+- Each run deletes at most **Max GB deleted per run** (default 50 GB). Anything over the limit waits for the next run.
+- **Delete eligible now** first shows the exact list with sizes and a total, and deletes nothing unless you confirm.
+- Sizes are shown in the preview, the result and the History tab.
+
 - A season with its own folder (`Show/Season 02/`) has the folder removed, including subtitles, nfo files and images.
 - In a flat layout (all episodes directly in the show folder), only that season's episode files and their sidecar files are deleted.
 - A whole show has its folder removed. As a safeguard, nothing is deleted if another show is found inside that folder.
@@ -60,7 +65,7 @@ Specials (season 0) are ignored unless enabled. They go when the whole show goes
 
 ## Where to find things
 
-- **Progress tab**: every show, each viewer's status and flags, and why each season is or isn't ready. Has filters for ready, flagged, watching and untouched shows. *Preview cleanup* shows what would go. *Delete eligible now* deletes immediately.
+- **Progress tab**: every show, each viewer's status and flags, and why each season is or isn't ready. Has filters for ready, flagged, watching and untouched shows. *Preview cleanup* shows what would go and how big it is. *Delete eligible now* only works in Delete mode, and asks you to confirm the exact list first.
 - **History tab**: every deletion, dry-run hit and failure.
 - **Dashboard → Scheduled Tasks → Watch Tracker → Clean up finished shows**: runs daily at 04:00 by default. You can change the time there.
 - Optional **flag tags**: `wt:stalled:Anna`, `wt:sampled:Bjorn`, `wt:mid-episode:…` and `wt:cleanup-ready` are written as tags on the show, so you can filter by them in any Jellyfin app.

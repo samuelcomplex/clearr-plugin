@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "1.1.0.0",
+        "changelog": "Safety: nothing is deleted unless Cleanup mode is Delete (the button and API now obey it); sizes shown in preview, confirm dialog and history; per-run size limit (default 50 GB). Built for Jellyfin 12.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.1.0.0.zip",
+        "checksum": "6843374f2aae61d39ffd677f141806bf",
+        "timestamp": "2026-11-25T23:30:00Z"
+      },
+      {
         "version": "1.0.2.0",
         "changelog": "Test Sonarr uses the values in the form; Sonarr URL works with or without http://",
         "targetAbi": "10.11.0.0",

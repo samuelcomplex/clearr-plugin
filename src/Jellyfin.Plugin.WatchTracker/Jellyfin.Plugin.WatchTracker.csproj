@@ -2,18 +2,18 @@
 
   <!--
     Normal build (your PC / CI):   dotnet build -c Release
-      -> references the official Jellyfin.Controller 10.11 NuGet package, targets net9.0.
+      -> references the official Jellyfin.Controller 12.x NuGet package, targets net10.0.
     Offline build (no NuGet access): dotnet build -c Release -p:UseStubs=true
       -> references signature-identical stubs in ../../stubs, targets net8.0
-         (net8 assemblies load fine in Jellyfin's net9 runtime).
+         (net8 assemblies load fine in Jellyfin 12.x on .NET 10).
   -->
 
   <PropertyGroup>
-    <TargetFramework Condition="'$(UseStubs)' != 'true'">net9.0</TargetFramework>
+    <TargetFramework Condition="'$(UseStubs)' != 'true'">net10.0</TargetFramework>
     <TargetFramework Condition="'$(UseStubs)' == 'true'">net8.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.WatchTracker</RootNamespace>
-    <AssemblyVersion>1.0.2.0</AssemblyVersion>
-    <FileVersion>1.0.2.0</FileVersion>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseStubs)' != 'true'">
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
+    <PackageReference Include="Jellyfin.Controller" Version="12.0.0">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
   </ItemGroup>

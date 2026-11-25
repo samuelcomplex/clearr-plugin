@@ -73,7 +73,22 @@ var cleanup = new CleanupService(analyzer, lib, new SonarrClient(null!), history
 var dry = await cleanup.RunAsync(true, false, null, default);
 Console.WriteLine("Dry run: " + string.Join(" | ", dry.Actions.Select(a => $"{a.Action} {a.SeriesName} {a.SeasonName ?? "(show)"}")));
 Expect(Directory.Exists(s3.Path), "Dry run deleted nothing");
+// Guard: the API must refuse real deletion unless Mode == Delete
+foreach (var m in new[] { Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.DryRun, Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.Off })
+{
+    _ = new TestPlugin(new Jellyfin.Plugin.WatchTracker.Configuration.PluginConfiguration { Mode = m });
+    var ctl = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!));
+    var res = (Microsoft.AspNetCore.Mvc.ContentResult)await ctl.RunCleanup(false, default);
+    Console.WriteLine($"  {m}: HTTP {res.StatusCode} {res.Content}");
+    Expect(res.StatusCode == 409 && Directory.Exists(s3.Path) && history.GetAll().Count == 0, $"API refuses to delete in {m} mode, nothing touched");
+}
+_ = new TestPlugin(new Jellyfin.Plugin.WatchTracker.Configuration.PluginConfiguration { Mode = Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.Delete });
+var ctlDel = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!));
+var prev = (Microsoft.AspNetCore.Mvc.ContentResult)await ctlDel.RunCleanup(true, default);
+Expect(prev.StatusCode is null or 200 && prev.Content!.Contains("\"totalBytes\":") && Directory.Exists(s3.Path), "Preview in Delete mode reports sizes and deletes nothing");
+Console.WriteLine("  preview: " + prev.Content![..Math.Min(160, prev.Content.Length)]);
 var real = await cleanup.RunAsync(false, true, null, default);
+Expect(real.TotalBytes > 0 && real.Actions.All(a => a.Bytes > 0), "Real run records sizes");
 Console.WriteLine("Real:    " + string.Join(" | ", real.Actions.Select(a => $"{a.Action} {a.SeriesName} {a.SeasonName ?? "(show)"} :: {a.Detail}")));
 Expect(!Directory.Exists(s3.Path), "Done Show folder deleted");
 Expect(Directory.Exists(s4.Path), "Kept Show folder kept");

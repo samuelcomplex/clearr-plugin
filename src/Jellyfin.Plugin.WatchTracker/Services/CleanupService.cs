@@ -67,11 +67,37 @@ public class CleanupService
                 }
             }
 
+            var capBytes = config.MaxDeleteGbPerRun > 0 ? config.MaxDeleteGbPerRun * 1024L * 1024L * 1024L : long.MaxValue;
+            long planned = 0;
             for (var i = 0; i < work.Count; i++)
             {
                 ct.ThrowIfCancellationRequested();
                 var (series, season) = work[i];
-                result.Actions.Add(await ProcessAsync(config, series, season, dryRun, ct).ConfigureAwait(false));
+                var size = MeasureBytes(series, season);
+                if (planned > 0 && planned + size > capBytes)
+                {
+                    result.Actions.Add(new HistoryEntry
+                    {
+                        Date = DateTime.UtcNow,
+                        Action = "Skipped",
+                        Kind = season is null ? "Series" : "Season",
+                        SeriesName = series.Name,
+                        SeasonName = season?.Name,
+                        Bytes = size,
+                        Detail = $"Per-run limit of {config.MaxDeleteGbPerRun} GB reached; will be handled on a later run"
+                    });
+                    continue;
+                }
+
+                planned += size;
+                var entry = await ProcessAsync(config, series, season, dryRun, ct).ConfigureAwait(false);
+                entry.Bytes = size;
+                if (entry.Action is "Deleted" or "WouldDelete")
+                {
+                    result.TotalBytes += size;
+                }
+
+                result.Actions.Add(entry);
                 progress?.Report(80.0 * (i + 1) / work.Count);
             }
 
@@ -158,6 +184,71 @@ public class CleanupService
         return entry;
     }
 
+    /// <summary>Size on disk of what a deletion would remove. Best effort; 0 if unknown.</summary>
+    private long MeasureBytes(SeriesReport seriesReport, SeasonReport? seasonReport)
+    {
+        try
+        {
+            if (_libraryManager.GetItemById(seriesReport.SeriesId) is not Series series)
+            {
+                return 0;
+            }
+
+            if (seasonReport is null)
+            {
+                return DirSize(series.Path);
+            }
+
+            var season = _libraryManager.GetItemById(seasonReport.SeasonId) as Season;
+            if (season != null && SeasonHasOwnFolder(series, season))
+            {
+                return DirSize(season.Path);
+            }
+
+            return SeasonEpisodes(series, seasonReport.SeasonId)
+                .Where(e => !string.IsNullOrEmpty(e.Path) && File.Exists(e.Path))
+                .Sum(e => new FileInfo(e.Path).Length);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Watch Tracker: could not measure size of {Series}", seriesReport.Name);
+            return 0;
+        }
+    }
+
+    private static long DirSize(string? path)
+    {
+        if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+        {
+            return 0;
+        }
+
+        return new DirectoryInfo(path).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+    }
+
+    private static bool SeasonHasOwnFolder(Series series, Season season)
+    {
+        if (string.IsNullOrEmpty(series.Path) || string.IsNullOrEmpty(season.Path))
+        {
+            return false;
+        }
+
+        var seriesDir = NormalizeDir(series.Path);
+        var seasonDir = NormalizeDir(season.Path);
+        return !string.Equals(seasonDir, seriesDir, StringComparison.OrdinalIgnoreCase)
+            && seasonDir.StartsWith(seriesDir, StringComparison.OrdinalIgnoreCase)
+            && Directory.Exists(seasonDir);
+    }
+
+    private List<Episode> SeasonEpisodes(Series series, Guid seasonId) =>
+        _libraryManager.GetItemList(new InternalItemsQuery
+        {
+            IncludeItemTypes = new[] { BaseItemKind.Episode },
+            AncestorIds = new[] { series.Id },
+            Recursive = true,
+            IsVirtualItem = false
+        }).OfType<Episode>().Where(e => e.SeasonId == seasonId).ToList();
+
     private void DeleteSeries(Series series)
     {
         var path = series.Path;
@@ -186,15 +277,8 @@ public class CleanupService
     private void DeleteSeason(Series series, SeasonReport seasonReport)
     {
         var season = _libraryManager.GetItemById(seasonReport.SeasonId) as Season;
-        var seriesDir = string.IsNullOrEmpty(series.Path) ? null : NormalizeDir(series.Path);
-        var seasonDir = season is null || string.IsNullOrEmpty(season.Path) ? null : NormalizeDir(season.Path);
 
-        var hasOwnFolder = seriesDir != null && seasonDir != null
-            && !string.Equals(seasonDir, seriesDir, StringComparison.OrdinalIgnoreCase)
-            && seasonDir.StartsWith(seriesDir, StringComparison.OrdinalIgnoreCase)
-            && Directory.Exists(seasonDir);
-
-        if (season != null && hasOwnFolder)
+        if (season != null && SeasonHasOwnFolder(series, season))
         {
             // Season has its own folder inside the show folder: remove the folder (episodes, subs, images, nfo).
             _libraryManager.DeleteItem(season, new DeleteOptions { DeleteFileLocation = true }, true);
@@ -202,15 +286,7 @@ public class CleanupService
         }
 
         // Flat layout (episodes directly in the show folder): delete episode files one by one.
-        var episodes = _libraryManager.GetItemList(new InternalItemsQuery
-        {
-            IncludeItemTypes = new[] { BaseItemKind.Episode },
-            AncestorIds = new[] { series.Id },
-            Recursive = true,
-            IsVirtualItem = false
-        }).OfType<Episode>().Where(e => e.SeasonId == seasonReport.SeasonId).ToList();
-
-        foreach (var ep in episodes)
+        foreach (var ep in SeasonEpisodes(series, seasonReport.SeasonId))
         {
             _libraryManager.DeleteItem(ep, new DeleteOptions { DeleteFileLocation = true }, true);
         }
