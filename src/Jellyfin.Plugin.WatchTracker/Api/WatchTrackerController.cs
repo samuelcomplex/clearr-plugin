@@ -43,17 +43,27 @@ public class WatchTrackerController : ControllerBase
     }
 
     [HttpPost("TestSonarr")]
-    public async Task<ActionResult> TestSonarr(CancellationToken ct)
+    public async Task<ActionResult> TestSonarr([FromBody] SonarrTestRequest? body, CancellationToken ct)
     {
+        // Test what's typed in the form; fall back to saved settings.
         var config = Plugin.Instance?.Configuration ?? new PluginConfiguration();
+        var url = string.IsNullOrWhiteSpace(body?.Url) ? config.SonarrUrl : body!.Url;
+        var key = string.IsNullOrWhiteSpace(body?.ApiKey) ? config.SonarrApiKey : body!.ApiKey;
         try
         {
-            return Json(new { ok = true, message = await _sonarr.TestAsync(config, ct).ConfigureAwait(false) });
+            return Json(new { ok = true, message = await _sonarr.TestAsync(url, key, ct).ConfigureAwait(false) });
         }
         catch (Exception ex)
         {
             return Json(new { ok = false, message = ex.Message });
         }
+    }
+
+    public class SonarrTestRequest
+    {
+        public string? Url { get; set; }
+
+        public string? ApiKey { get; set; }
     }
 
     // Own serializer so the page always gets camelCase regardless of server JSON settings.

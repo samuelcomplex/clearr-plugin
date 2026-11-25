@@ -186,10 +186,13 @@
         function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
         function fmtDate(d) { if (!d) return ''; var x = new Date(d); return isNaN(x) ? '' : x.toLocaleDateString(); }
 
-        function api(path, method) {
+        function api(path, method, body) {
+            var headers = { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' };
+            if (body !== undefined) headers['Content-Type'] = 'application/json';
             return fetch(ApiClient.getUrl(path), {
                 method: method || 'GET',
-                headers: { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' }
+                headers: headers,
+                body: body !== undefined ? JSON.stringify(body) : undefined
             }).then(function (r) {
                 if (!r.ok) throw new Error('HTTP ' + r.status);
                 return r.json();
@@ -361,8 +364,8 @@
         });
 
         $('#wtTestSonarr').addEventListener('click', function () {
-            $('#wtSonarrStatus').textContent = 'Testing saved settings…';
-            api('WatchTracker/TestSonarr', 'POST').then(function (r) {
+            $('#wtSonarrStatus').textContent = 'Testing…';
+            api('WatchTracker/TestSonarr', 'POST', { Url: $('#SonarrUrl').value.trim(), ApiKey: $('#SonarrApiKey').value.trim() }).then(function (r) {
                 $('#wtSonarrStatus').innerHTML = '<span class="' + (r.ok ? 'wt-ok' : 'wt-bad') + '">' + esc(r.message) + '</span>';
             }).catch(function (e) { $('#wtSonarrStatus').textContent = e.message; });
         });
