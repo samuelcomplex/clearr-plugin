@@ -6,7 +6,7 @@
     "description": "Tracks who has started and finished each show and season, flags viewers who stopped watching, and removes seasons or shows once everyone who started them has finished. Safe by default: nothing is deleted unless Cleanup mode is set to Delete. Works on Jellyfin 10.11 and 12.x.",
     "owner": "samuelcomplex",
     "category": "General",
-    "imageUrl": "",
+    "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/docs/logo/logo.png",
     "versions": [
       {
         "version": "1.2.1.0",

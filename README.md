@@ -1,5 +1,7 @@
 # Watch Tracker – Jellyfin plugin
 
+![Watch Tracker](docs/logo/logo.png)
+
 Tracks who has started each TV show and season, and who has finished it. It flags viewers who gave up, and can delete seasons or whole shows once everyone who started them has finished.
 
 ## Compatibility

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17202e"/><stop offset="1" stop-color="#0e131b"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aa5cc3"/><stop offset="1" stop-color="#00a4dc"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#00a4dc" stop-opacity="0.18"/><stop offset="1" stop-color="#00a4dc" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#glow)"/>
+  <g transform="translate(55,6)">
+  <!-- screen -->
+  <g transform="translate(150,190)">
+    <rect x="0" y="0" width="330" height="220" rx="28" fill="none" stroke="url(#brand)" stroke-width="18"/>
+    <path d="M135 70 L135 150 L205 110 Z" fill="url(#brand)"/>
+    <rect x="125" y="230" width="80" height="16" rx="8" fill="url(#brand)"/>
+    <!-- viewer progress bars -->
+    <g transform="translate(0,282)">
+      <rect x="0" y="0" width="330" height="14" rx="7" fill="#ffffff" fill-opacity="0.12"/>
+      <rect x="0" y="0" width="330" height="14" rx="7" fill="#4caf50"/>
+      <rect x="0" y="30" width="330" height="14" rx="7" fill="#ffffff" fill-opacity="0.12"/>
+      <rect x="0" y="30" width="215" height="14" rx="7" fill="#2196f3"/>
+      <rect x="0" y="60" width="330" height="14" rx="7" fill="#ffffff" fill-opacity="0.12"/>
+      <rect x="0" y="60" width="70" height="14" rx="7" fill="#ff9800"/>
+    </g>
+    <!-- check badge -->
+    <circle cx="322" cy="12" r="56" fill="#4caf50" stroke="#141b26" stroke-width="12"/>
+    <path d="M296 13 L315 32 L350 -6" fill="none" stroke="#ffffff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- wordmark -->
+  <g font-family="'Segoe UI','Noto Sans','DejaVu Sans',Arial,sans-serif" fill="#ffffff">
+    <text x="590" y="345" font-size="122" font-weight="700" letter-spacing="-2">Watch</text>
+    <text x="590" y="470" font-size="122" font-weight="700" letter-spacing="-2" fill="url(#brand)">Tracker</text>
+  </g>
+  </g>
+</svg>
