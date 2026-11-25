@@ -23,7 +23,7 @@ public class SonarrClient
         c.UnmonitorInSonarr && !string.IsNullOrWhiteSpace(c.SonarrUrl) && !string.IsNullOrWhiteSpace(c.SonarrApiKey);
 
     /// <summary>
-    /// Unmonitors the season (seasonNumber != null) or the whole series in Sonarr.
+    /// Unmonitors one season (seasonNumber != null) or all existing seasons in Sonarr. The series stays monitored.
     /// Returns a human-readable note. Throws on HTTP/API errors so the caller can skip deleting.
     /// </summary>
     public async Task<string> UnmonitorAsync(PluginConfiguration c, string? tvdbId, int? seasonNumber, CancellationToken ct)
@@ -51,11 +51,8 @@ public class SonarrClient
         var id = series["id"]?.GetValue<int>() ?? throw new InvalidOperationException("Sonarr series has no id");
         var seasons = series["seasons"] as JsonArray;
 
-        if (seasonNumber is null)
-        {
-            series["monitored"] = false;
-        }
-
+        // The series itself always stays monitored, so Sonarr still picks up future seasons
+        // (subject to the series' own "Monitor New Seasons" setting). Only existing seasons are unmonitored.
         if (seasons != null)
         {
             foreach (var s in seasons.OfType<JsonObject>())
@@ -75,7 +72,7 @@ public class SonarrClient
         using var putResp = await client.SendAsync(putReq, ct).ConfigureAwait(false);
         putResp.EnsureSuccessStatusCode();
 
-        return seasonNumber is null ? "unmonitored in Sonarr" : $"season {seasonNumber} unmonitored in Sonarr";
+        return seasonNumber is null ? "existing seasons unmonitored in Sonarr (show still monitored for new seasons)" : $"season {seasonNumber} unmonitored in Sonarr";
     }
 
     public async Task<string> TestAsync(PluginConfiguration c, CancellationToken ct)

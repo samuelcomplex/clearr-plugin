@@ -56,7 +56,7 @@ Specials (season 0) are ignored unless enabled. They go when the whole show goes
 - A season with its own folder (`Show/Season 02/`) has the folder removed, including subtitles, nfo files and images.
 - In a flat layout (all episodes directly in the show folder), only that season's episode files and their sidecar files are deleted.
 - A whole show has its folder removed. As a safeguard, nothing is deleted if another show is found inside that folder.
-- If **Sonarr** is configured, the season or show is unmonitored first, so it isn't downloaded again. If Sonarr can't be reached, nothing is deleted and the History tab shows "Failed".
+- If **Sonarr** is configured, the deleted season (or, for a whole show, every existing season) is unmonitored first so it isn't downloaded again. The show itself stays monitored, so future seasons still download. If Sonarr can't be reached, nothing is deleted and the History tab shows "Failed".
 
 ## Where to find things
 
