@@ -3,50 +3,26 @@
     "guid": "94d2b53c-7f01-48dd-8726-c645ebe5ff9b",
     "name": "Watch Tracker",
     "overview": "Per-user show progress, abandon flags and automatic cleanup",
-    "description": "Tracks who has started and finished each show/season, flags abandoned viewing, and removes seasons/shows once everyone who started them has finished.",
+    "description": "Tracks who has started and finished each show and season, flags viewers who stopped watching, and removes seasons or shows once everyone who started them has finished. Safe by default: nothing is deleted unless Cleanup mode is set to Delete. Works on Jellyfin 10.11 and 12.x.",
     "owner": "samuelcomplex",
     "category": "General",
     "imageUrl": "",
     "versions": [
       {
+        "version": "1.2.1.0",
+        "changelog": "Works on Jellyfin 10.11 and 12.x from one package. Includes all safety features: nothing is deleted unless Cleanup mode is Delete, sizes before deleting, per-run limit, Keep toggles.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.1.0.zip",
+        "checksum": "eadc93c1642bb16182d2eeeab3ebe553",
+        "timestamp": "2026-11-26T00:30:00Z"
+      },
+      {
         "version": "1.2.0.0",
-        "changelog": "Keep toggle for shows and seasons on the Progress tab (stored by the plugin and written as the keep tag); Delete eligible now only appears in Delete mode.",
+        "changelog": "Keep toggle for shows and seasons; Delete eligible now only appears in Delete mode.",
         "targetAbi": "12.0.0.0",
         "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.0.0.zip",
         "checksum": "62b2ba8d9009c78a56d801b543d2249e",
         "timestamp": "2026-11-26T00:00:00Z"
-      },
-      {
-        "version": "1.1.0.0",
-        "changelog": "Safety: nothing is deleted unless Cleanup mode is Delete (the button and API now obey it); sizes shown in preview, confirm dialog and history; per-run size limit (default 50 GB). Built for Jellyfin 12.",
-        "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.1.0.0.zip",
-        "checksum": "6843374f2aae61d39ffd677f141806bf",
-        "timestamp": "2026-11-25T23:30:00Z"
-      },
-      {
-        "version": "1.0.2.0",
-        "changelog": "Test Sonarr uses the values in the form; Sonarr URL works with or without http://",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.0.2.0.zip",
-        "checksum": "3381c7d90df098bb3c122de23765ae79",
-        "timestamp": "2026-11-25T18:00:00Z"
-      },
-      {
-        "version": "1.0.1.0",
-        "changelog": "Sonarr: whole-show cleanup keeps the show monitored so future seasons still download",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.0.1.0.zip",
-        "checksum": "2896ba9272cd8f7eabe82aed64ddf00c",
-        "timestamp": "2026-11-25T12:00:00Z"
-      },
-      {
-        "version": "1.0.0.0",
-        "changelog": "Initial release",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.0.0.0.zip",
-        "checksum": "b2f1f0dbbbac682ddadc54f278d92154",
-        "timestamp": "2026-11-25T00:00:00Z"
       }
     ]
   }
