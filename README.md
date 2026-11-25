@@ -21,7 +21,7 @@ Jellyfin installs updates from the same place.
    - Windows install: `%ProgramData%\Jellyfin\Server\plugins\`
 3. Start Jellyfin. **Watch Tracker** now appears in the dashboard side menu and under Dashboard → Plugins.
 
-The plugin starts in **Dry run** mode. **Nothing is ever deleted unless Cleanup mode is set to Delete.** That applies to both the scheduled task and the **Delete eligible now** button, which stays greyed out in other modes, and the server refuses deletion requests too.
+The plugin starts in **Dry run** mode. **Nothing is ever deleted unless Cleanup mode is set to Delete.** That applies to both the scheduled task and the **Delete eligible now** button, which only appears in Delete mode. The server also refuses deletion requests in any other mode.
 
 ## How it decides
 
@@ -44,7 +44,7 @@ All status comes from Jellyfin's own played and resume data. Nothing is tracked 
 - at least one person started it, and
 - everyone who started it has finished it. Flagged viewers count as "not finished" unless you untick *Flagged viewers still block cleanup*.
 - the grace period (default 7 days) has passed since the last person finished,
-- the show doesn't have the **keep** tag, and
+- neither the show nor the season is marked **keep**, and
 - it isn't the newest season of a show that's still *Continuing* (so a season that's still airing isn't removed).
 
 **A whole show** follows the same rules across all its seasons. By default, its status must also be *Ended*. Continuing shows only lose finished seasons.
@@ -62,6 +62,14 @@ Specials (season 0) are ignored unless enabled. They go when the whole show goes
 - In a flat layout (all episodes directly in the show folder), only that season's episode files and their sidecar files are deleted.
 - A whole show has its folder removed. As a safeguard, nothing is deleted if another show is found inside that folder.
 - If **Sonarr** is configured, the deleted season (or, for a whole show, every existing season) is unmonitored first so it isn't downloaded again. The show itself stays monitored, so future seasons still download. If Sonarr can't be reached, nothing is deleted and the History tab shows "Failed".
+
+## Keeping shows and seasons
+
+Click **Keep** next to a show or a season on the Progress tab, and it is never deleted. Click it again to undo.
+
+- The plugin adds the keep tag in Jellyfin, so you can see and filter by it there. It also stores the keep itself, so it survives a metadata refresh that wipes tags.
+- Adding the keep tag yourself in Jellyfin (Edit metadata → Tags) works too.
+- If one season is kept, the whole show can't be deleted, but its other seasons can still be removed.
 
 ## Where to find things
 

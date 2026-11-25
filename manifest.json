@@ -9,6 +9,14 @@
     "imageUrl": "",
     "versions": [
       {
+        "version": "1.2.0.0",
+        "changelog": "Keep toggle for shows and seasons on the Progress tab (stored by the plugin and written as the keep tag); Delete eligible now only appears in Delete mode.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.0.0.zip",
+        "checksum": "62b2ba8d9009c78a56d801b543d2249e",
+        "timestamp": "2026-11-26T00:00:00Z"
+      },
+      {
         "version": "1.1.0.0",
         "changelog": "Safety: nothing is deleted unless Cleanup mode is Delete (the button and API now obey it); sizes shown in preview, confirm dialog and history; per-run size limit (default 50 GB). Built for Jellyfin 12.",
         "targetAbi": "12.0.0.0",

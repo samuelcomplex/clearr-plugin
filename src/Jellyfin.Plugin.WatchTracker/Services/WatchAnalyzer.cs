@@ -21,9 +21,11 @@ public class WatchAnalyzer
     private readonly ILibraryManager _libraryManager;
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataManager;
+    private readonly KeepStore _keep;
 
-    public WatchAnalyzer(ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager)
+    public WatchAnalyzer(ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager, KeepStore keep)
     {
+        _keep = keep;
         _libraryManager = libraryManager;
         _userManager = userManager;
         _userDataManager = userDataManager;
@@ -106,7 +108,7 @@ public class WatchAnalyzer
             SeriesId = series.Id,
             Name = series.Name,
             Status = series.Status?.ToString(),
-            Kept = keepTag.Length > 0 && (series.Tags ?? Array.Empty<string>()).Any(t => string.Equals(t, keepTag, StringComparison.OrdinalIgnoreCase)),
+            Kept = IsKept(series, keepTag),
             TvdbId = GetTvdbId(series),
             EpisodeCount = episodes.Count
         };
@@ -133,7 +135,8 @@ public class WatchAnalyzer
                 SeasonId = g.SeasonId,
                 Number = g.Number,
                 Name = season?.Name ?? (g.Number.HasValue ? "Season " + g.Number.Value.ToString(CultureInfo.InvariantCulture) : "Unknown season"),
-                EpisodeCount = g.Episodes.Count
+                EpisodeCount = g.Episodes.Count,
+                Kept = season != null && IsKept(season, keepTag)
             };
 
             foreach (var user in users)
@@ -147,7 +150,7 @@ public class WatchAnalyzer
                 && g.Number.Value == maxSeasonNumber;
 
             (seasonReport.Eligible, seasonReport.Reason) = Decide(
-                seasonReport.Users, config, now, sr.Kept, isProtectedLatest ? "Newest season of a show that's still continuing" : null);
+                seasonReport.Users, config, now, sr.Kept || seasonReport.Kept, isProtectedLatest ? "Newest season of a show that's still continuing" : null);
 
             sr.Seasons.Add(seasonReport);
         }
@@ -161,6 +164,11 @@ public class WatchAnalyzer
         if (config.RequireEndedForSeriesDelete && series.Status != SeriesStatus.Ended)
         {
             seriesBlock = series.Status.HasValue ? "Show status is " + series.Status.Value : "Show status is unknown (not marked Ended)";
+        }
+
+        if (seriesBlock == null && sr.Seasons.Any(x => x.Kept))
+        {
+            seriesBlock = "a season is marked keep (other seasons can still be removed)";
         }
 
         (sr.Eligible, sr.Reason) = Decide(sr.Users, config, now, sr.Kept, seriesBlock);
@@ -265,7 +273,7 @@ public class WatchAnalyzer
 
         if (kept)
         {
-            return (false, "Everyone finished, but the show has the keep tag");
+            return (false, "Everyone finished, but it's marked keep");
         }
 
         if (extraBlock != null)
@@ -295,6 +303,10 @@ public class WatchAnalyzer
 
         return s + ")";
     }
+
+    private bool IsKept(BaseItem item, string keepTag) =>
+        _keep.Contains(item.Id)
+        || (keepTag.Length > 0 && (item.Tags ?? Array.Empty<string>()).Any(t => string.Equals(t, keepTag, StringComparison.OrdinalIgnoreCase)));
 
     internal static int? SeasonNumber(Episode e, Dictionary<Guid, Season> seasonsById)
     {

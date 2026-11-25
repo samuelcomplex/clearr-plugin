@@ -39,7 +39,8 @@ var (s5, _, s5eps) = lib.AddSeries(root, "Sampled Show", SeriesStatus.Ended, new
 data.Set(B, s5eps[0], true, now.AddDays(-52)); data.Set(B, s5eps[1], true, now.AddDays(-51)); data.Set(B, s5eps[2], false, now.AddDays(-50), ticks: 12345);
 foreach (var e in s5eps) data.Set(A, e, true, now.AddDays(-30));
 
-var analyzer = new WatchAnalyzer(lib, users, data);
+var keepStore = new KeepStore(new FakePaths(root), NullLogger<KeepStore>.Instance);
+var analyzer = new WatchAnalyzer(lib, users, data, keepStore);
 var report = analyzer.BuildReport();
 foreach (var s in report.Series)
 {
@@ -62,10 +63,35 @@ Expect(!r2.Seasons[1].Eligible && r2.Seasons[1].Reason.Contains("continuing"), "
 Expect(!r2.Eligible && r2.Reason.Contains("Continuing"), "Running Show whole-show delete blocked (Continuing)");
 Expect(report.Series.Single(s => s.Name == "Done Show").Eligible, "Done Show eligible");
 var r4 = report.Series.Single(s => s.Name == "Kept Show");
-Expect(!r4.Eligible && r4.Reason.Contains("keep"), "Kept Show protected by tag (case-insensitive)");
+Expect(!r4.Eligible && r4.Reason.Contains("keep") && r4.Kept, "Kept Show protected by tag (case-insensitive)");
 var b5 = report.Series.Single(s => s.Name == "Sampled Show").Users.Single(u => u.UserName == "Bjorn");
 Expect(b5.Flags.Contains("Sampled") && b5.Flags.Contains("MidEpisode") && b5.LastEpisode == "S01E03", "Bjorn on Sampled Show: Sampled + MidEpisode at S01E03");
 Expect(!report.Series.Single(s => s.Name == "Sampled Show").Eligible, "Sampled Show blocked while flagged viewers block");
+
+// Keep via plugin: season-level on Running Show S1, then show-level on Done Show (then undo)
+var ctlK = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, null!, null!, new SonarrClient(null!), keepStore, lib);
+var s2Season1 = report.Series.Single(x => x.Name == "Running Show").Seasons[0].SeasonId;
+await ctlK.SetKeep(s2Season1, true, default);
+var rk = analyzer.BuildReport();
+var rs2 = rk.Series.Single(x => x.Name == "Running Show");
+Expect(rs2.Seasons[0].Kept && !rs2.Seasons[0].Eligible && lib.GetItemById(s2Season1)!.Tags.Contains("keep"), "Keep season via plugin: kept, not eligible, tag written");
+await ctlK.SetKeep(s3.Id, true, default);
+s3.Tags = Array.Empty<string>(); // simulate a metadata refresh wiping tags
+rk = analyzer.BuildReport();
+Expect(!rk.Series.Single(x => x.Name == "Done Show").Eligible, "Keep survives tag wipe (stored by plugin)");
+await ctlK.SetKeep(s3.Id, false, default);
+await ctlK.SetKeep(s2Season1, false, default);
+rk = analyzer.BuildReport();
+Expect(rk.Series.Single(x => x.Name == "Done Show").Eligible && rk.Series.Single(x => x.Name == "Running Show").Seasons[0].Eligible && !lib.GetItemById(s2Season1)!.Tags.Contains("keep"), "Un-keep restores eligibility and removes tag");
+var sk = (Microsoft.AspNetCore.Mvc.ContentResult)await ctlK.SetKeep(s1eps[0].Id, true, default);
+Expect(sk.StatusCode == 404, "Keep rejects episodes");
+
+// Season keep blocks whole-show deletion but not other seasons
+var (s6, s6seasons, s6eps) = lib.AddSeries(root, "Two Season Show", SeriesStatus.Ended, new[] { 1, 1 }, seasonFolders: true);
+foreach (var e in s6eps) data.Set(A, e, true, now.AddDays(-40));
+await ctlK.SetKeep(s6seasons[1].Id, true, default);
+var r6 = analyzer.BuildReport().Series.Single(x => x.Name == "Two Season Show");
+Expect(!r6.Eligible && r6.Seasons[0].Eligible && !r6.Seasons[1].Eligible, "Kept S2 blocks whole-show delete; S1 still removable");
 
 // Cleanup: dry run then real
 var history = new HistoryStore(new FakePaths(root), NullLogger<HistoryStore>.Instance);
@@ -77,13 +103,13 @@ Expect(Directory.Exists(s3.Path), "Dry run deleted nothing");
 foreach (var m in new[] { Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.DryRun, Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.Off })
 {
     _ = new TestPlugin(new Jellyfin.Plugin.WatchTracker.Configuration.PluginConfiguration { Mode = m });
-    var ctl = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!));
+    var ctl = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!), keepStore, lib);
     var res = (Microsoft.AspNetCore.Mvc.ContentResult)await ctl.RunCleanup(false, default);
     Console.WriteLine($"  {m}: HTTP {res.StatusCode} {res.Content}");
     Expect(res.StatusCode == 409 && Directory.Exists(s3.Path) && history.GetAll().Count == 0, $"API refuses to delete in {m} mode, nothing touched");
 }
 _ = new TestPlugin(new Jellyfin.Plugin.WatchTracker.Configuration.PluginConfiguration { Mode = Jellyfin.Plugin.WatchTracker.Configuration.CleanupMode.Delete });
-var ctlDel = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!));
+var ctlDel = new Jellyfin.Plugin.WatchTracker.Api.WatchTrackerController(analyzer, cleanup, history, new SonarrClient(null!), keepStore, lib);
 var prev = (Microsoft.AspNetCore.Mvc.ContentResult)await ctlDel.RunCleanup(true, default);
 Expect(prev.StatusCode is null or 200 && prev.Content!.Contains("\"totalBytes\":") && Directory.Exists(s3.Path), "Preview in Delete mode reports sizes and deletes nothing");
 Console.WriteLine("  preview: " + prev.Content![..Math.Min(160, prev.Content.Length)]);
@@ -93,6 +119,7 @@ Console.WriteLine("Real:    " + string.Join(" | ", real.Actions.Select(a => $"{a
 Expect(!Directory.Exists(s3.Path), "Done Show folder deleted");
 Expect(Directory.Exists(s4.Path), "Kept Show folder kept");
 Expect(Directory.Exists(s1.Path) && s1eps.All(e => File.Exists(e.Path)), "Ended Show untouched");
+Expect(!Directory.Exists(Path.Combine(s6.Path, "Season 1")) && Directory.Exists(Path.Combine(s6.Path, "Season 2")), "Two Season Show: S1 deleted, kept S2 survives");
 var s2s1 = s2eps.Where(e => e.ParentIndexNumber == 1).ToList(); var s2s2 = s2eps.Where(e => e.ParentIndexNumber == 2).ToList();
 Expect(s2s1.All(e => !File.Exists(e.Path)) && s2s2.All(e => File.Exists(e.Path)) && Directory.Exists(s2.Path), "Flat layout: only S1 episode files deleted, show folder kept");
 Expect(history.GetAll().Count == real.Actions.Count, "History recorded");

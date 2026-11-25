@@ -10,6 +10,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
 {
     public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
+        serviceCollection.AddSingleton<KeepStore>();
         serviceCollection.AddSingleton<WatchAnalyzer>();
         serviceCollection.AddSingleton<HistoryStore>();
         serviceCollection.AddSingleton<SonarrClient>();

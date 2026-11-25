@@ -58,6 +58,8 @@ public class SeasonReport
 
     public int EpisodeCount { get; set; }
 
+    public bool Kept { get; set; }
+
     public List<UserProgress> Users { get; set; } = new();
 
     public bool Eligible { get; set; }

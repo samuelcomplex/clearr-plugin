@@ -40,6 +40,9 @@
         #WatchTrackerPage .wt-muted { opacity:.6; }
         #WatchTrackerPage .wt-section { margin:2em 0 .8em; font-size:1.15em; font-weight:600; border-bottom:1px solid rgba(128,128,128,.25); padding-bottom:.3em; }
         #WatchTrackerPage .wt-users label { display:block; margin:.25em 0; }
+        #WatchTrackerPage .wt-keep { font:inherit; font-size:.78em; padding:.2em .8em; border-radius:1em; cursor:pointer; border:1px solid rgba(128,128,128,.5); background:transparent; color:inherit; white-space:nowrap; }
+        #WatchTrackerPage .wt-keep:hover { border-color:#00a4dc; }
+        #WatchTrackerPage .wt-keep.on { background:#00a4dc; border-color:#00a4dc; color:#fff; font-weight:600; }
         #WatchTrackerPage .wt-result { margin-top:1em; padding:1em; border-radius:.5em; background:rgba(128,128,128,.1); display:none; }
     </style>
 
@@ -62,11 +65,12 @@
                         <option value="flagged">Flagged viewers</option>
                         <option value="watching">Someone is watching</option>
                         <option value="untouched">Nobody started</option>
+                        <option value="kept">Kept</option>
                     </select>
                     <input id="wtSearch" type="search" placeholder="Search shows" />
                     <button is="emby-button" type="button" class="raised button-alt" id="wtRefresh"><span>Refresh</span></button>
                     <button is="emby-button" type="button" class="raised" id="wtPreview"><span>Preview cleanup</span></button>
-                    <button is="emby-button" type="button" class="raised button-delete" id="wtDeleteNow" disabled><span>Delete eligible now</span></button>
+                    <button is="emby-button" type="button" class="raised button-delete" id="wtDeleteNow" style="display:none"><span>Delete eligible now</span></button>
                 </div>
                 <div id="wtModeNote" class="fieldDescription" style="margin:-.4em 0 1em"></div>
                 <div id="wtResult" class="wt-result"></div>
@@ -203,10 +207,10 @@
         function setMode(mode) {
             savedMode = mode;
             var btn = $('#wtDeleteNow');
-            btn.disabled = mode !== 'Delete';
+            btn.style.display = mode === 'Delete' ? '' : 'none';
             $('#wtModeNote').textContent = mode === 'Delete'
                 ? 'Cleanup mode is Delete: "Delete eligible now" removes files immediately after you confirm.'
-                : 'Cleanup mode is ' + (mode === 'Off' ? 'Off' : 'Dry run') + ', so nothing can be deleted. "Preview cleanup" shows what would go.';
+                : 'Cleanup mode is ' + (mode === 'Off' ? 'Off' : 'Dry run') + ', so nothing can be deleted. "Preview cleanup" shows what would go. Use "Keep" to protect a show or season.';
         }
 
         function api(path, method, body) {
@@ -244,6 +248,11 @@
             return '<span class="' + cls + '" title="' + esc(title) + '">' + label + '</span>';
         }
 
+        function keepBtn(id, kept, what) {
+            return '<button type="button" class="wt-keep' + (kept ? ' on' : '') + '" data-item="' + esc(id) + '" title="' +
+                (kept ? 'Kept: this ' + what + ' is never deleted. Click to remove.' : 'Never delete this ' + what) + '">' + (kept ? 'Kept ✓' : 'Keep') + '</button>';
+        }
+
         function seriesMatches(s, filter, q) {
             if (q && s.name.toLowerCase().indexOf(q) < 0) return false;
             var started = s.users.some(function (u) { return u.status !== 'NotStarted'; });
@@ -252,6 +261,7 @@
                 case 'flagged': return s.users.some(function (u) { return u.flags.length; }) || s.seasons.some(function (x) { return x.users.some(function (u) { return u.flags.length; }); });
                 case 'watching': return s.users.some(function (u) { return u.status === 'InProgress' && !u.flags.length; });
                 case 'untouched': return !started;
+                case 'kept': return s.kept || s.seasons.some(function (x) { return x.kept; });
                 default: return true;
             }
         }
@@ -271,7 +281,7 @@
             var html = list.map(function (s) {
                 var pill = '';
                 var eligibleSeasons = s.seasons.filter(function (x) { return x.eligible; }).length;
-                if (s.kept) pill = '<span class="wt-pill pill-keep">keep</span>';
+                if (s.kept) pill = '';
                 else if (s.eligible) pill = '<span class="wt-pill pill-ready">show ready</span>';
                 else if (eligibleSeasons) pill = '<span class="wt-pill pill-partial">' + eligibleSeasons + ' season' + (eligibleSeasons > 1 ? 's' : '') + ' ready</span>';
 
@@ -282,17 +292,28 @@
                     var cells = x.users.filter(function (u) { return u.status !== 'NotStarted'; }).map(function (u) { return userChip(u, true); }).join(' ');
                     return '<tr><td>' + esc(x.name) + '<div class="wt-sub">' + x.episodeCount + ' episodes</div></td>' +
                         '<td><div class="wt-chips">' + (cells || '<span class="wt-muted">—</span>') + '</div></td>' +
-                        '<td class="wt-reason ' + (x.eligible ? 'wt-ok' : '') + '">' + (x.eligible ? '✓ ' : '') + esc(x.reason) + '</td></tr>';
+                        '<td class="wt-reason ' + (x.eligible ? 'wt-ok' : '') + '">' + (x.eligible ? '✓ ' : '') + esc(x.reason) + '</td>' +
+                        '<td>' + (s.kept ? '<span class="wt-sub">show kept</span>' : keepBtn(x.seasonId, x.kept, 'season')) + '</td></tr>';
                 }).join('');
 
                 return '<div class="wt-card' + (openIds[s.seriesId] ? ' open' : '') + '" data-id="' + s.seriesId + '">' +
                     '<div class="wt-card-head"><div class="wt-name">' + esc(s.name) + ' <span class="wt-sub">' + esc(s.status || 'unknown status') + ' · ' + s.episodeCount + ' episodes</span></div>' +
-                    '<div class="wt-chips">' + chips + '</div>' + pill + '</div>' +
+                    '<div class="wt-chips">' + chips + '</div>' + pill + keepBtn(s.seriesId, s.kept, 'show') + '</div>' +
                     '<div class="wt-body"><p class="wt-reason ' + (s.eligible ? 'wt-ok' : '') + '"><b>Whole show:</b> ' + esc(s.reason) + '</p>' +
-                    '<table class="wt-table"><thead><tr><th>Season</th><th>Viewers</th><th>Cleanup</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+                    '<table class="wt-table"><thead><tr><th>Season</th><th>Viewers</th><th>Cleanup</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
             }).join('');
 
             $('#wtList').innerHTML = html || '<p class="wt-muted">Nothing matches.</p>';
+            $('#wtList').querySelectorAll('.wt-keep').forEach(function (b) {
+                b.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var keep = !b.classList.contains('on');
+                    b.disabled = true;
+                    api('WatchTracker/Keep?itemId=' + encodeURIComponent(b.getAttribute('data-item')) + '&keep=' + keep, 'POST')
+                        .then(function () { return loadReport(); })
+                        .catch(function (err) { b.disabled = false; Dashboard.alert('Could not change keep: ' + err.message); });
+                });
+            });
             $('#wtList').querySelectorAll('.wt-card-head').forEach(function (h) {
                 h.addEventListener('click', function () {
                     var card = h.parentNode;
