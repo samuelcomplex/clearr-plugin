@@ -1,0 +1,21 @@
+[
+  {
+    "guid": "94d2b53c-7f01-48dd-8726-c645ebe5ff9b",
+    "name": "Watch Tracker",
+    "overview": "Per-user show progress, abandon flags and automatic cleanup",
+    "description": "Tracks who has started and finished each show/season, flags abandoned viewing, and removes seasons/shows once everyone who started them has finished.",
+    "owner": "samuelcomplex",
+    "category": "General",
+    "imageUrl": "",
+    "versions": [
+      {
+        "version": "1.0.0.0",
+        "changelog": "Initial release",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.0.0.0.zip",
+        "checksum": "b2f1f0dbbbac682ddadc54f278d92154",
+        "timestamp": "2026-11-25T00:00:00Z"
+      }
+    ]
+  }
+]

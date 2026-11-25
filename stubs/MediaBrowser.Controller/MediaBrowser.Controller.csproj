@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyVersion>10.11.0.0</AssemblyVersion>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <NoWarn>CS0067;CS8618;CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../MediaBrowser.Common/MediaBrowser.Common.csproj" /><ProjectReference Include="../Jellyfin.Database.Implementations/Jellyfin.Database.Implementations.csproj" /><FrameworkReference Include="Microsoft.AspNetCore.App" /></ItemGroup>
+</Project>
