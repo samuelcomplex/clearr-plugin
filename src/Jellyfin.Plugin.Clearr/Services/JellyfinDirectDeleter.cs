@@ -22,20 +22,20 @@ public class JellyfinDirectDeleter : IDirectDeleter
         where T : BaseItem =>
         _library.GetItemById(Guid.Parse(id)) as T ?? throw new InvalidOperationException("No longer in the Jellyfin library");
 
-    public long Measure(DirectTarget t)
+    public long Measure(DirectTarget target)
     {
         try
         {
-            switch (t.Kind)
+            switch (target.Kind)
             {
                 case "Show":
-                    return DirSize(Item<Series>(t.ItemId).Path);
+                    return DirSize(Item<Series>(target.ItemId).Path);
                 case "Season":
-                    var series = Item<Series>(t.ItemId);
-                    var season = t.SeasonId != null && Guid.TryParse(t.SeasonId, out var sid) ? _library.GetItemById(sid) as Season : null;
-                    return season != null && OwnFolder(series, season) ? DirSize(season.Path) : SeasonEpisodes(series, t).Sum(e => FileSize(e.Path));
+                    var series = Item<Series>(target.ItemId);
+                    var season = target.SeasonId != null && Guid.TryParse(target.SeasonId, out var sid) ? _library.GetItemById(sid) as Season : null;
+                    return season != null && OwnFolder(series, season) ? DirSize(season.Path) : SeasonEpisodes(series, target).Sum(e => FileSize(e.Path));
                 case "Movie":
-                    var movie = Item<Movie>(t.ItemId);
+                    var movie = Item<Movie>(target.ItemId);
                     return movie.IsInMixedFolder ? FileSize(movie.Path) : DirSize(movie.ContainingFolderPath);
                 default:
                     return 0;
@@ -47,12 +47,12 @@ public class JellyfinDirectDeleter : IDirectDeleter
         }
     }
 
-    public string Delete(DirectTarget t)
+    public string Delete(DirectTarget target)
     {
-        switch (t.Kind)
+        switch (target.Kind)
         {
             case "Show":
-                var series = Item<Series>(t.ItemId);
+                var series = Item<Series>(target.ItemId);
                 var path = series.Path;
                 if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
                 {
@@ -71,15 +71,15 @@ public class JellyfinDirectDeleter : IDirectDeleter
                 return "show folder deleted through Jellyfin (not managed by Sonarr)";
 
             case "Season":
-                var show = Item<Series>(t.ItemId);
-                var season = t.SeasonId != null && Guid.TryParse(t.SeasonId, out var sid) ? _library.GetItemById(sid) as Season : null;
+                var show = Item<Series>(target.ItemId);
+                var season = target.SeasonId != null && Guid.TryParse(target.SeasonId, out var sid) ? _library.GetItemById(sid) as Season : null;
                 if (season != null && OwnFolder(show, season))
                 {
                     _library.DeleteItem(season, new DeleteOptions { DeleteFileLocation = true }, true);
                     return "season folder deleted through Jellyfin (not managed by Sonarr)";
                 }
 
-                var eps = SeasonEpisodes(show, t);
+                var eps = SeasonEpisodes(show, target);
                 foreach (var ep in eps)
                 {
                     _library.DeleteItem(ep, new DeleteOptions { DeleteFileLocation = true }, true);
@@ -93,21 +93,21 @@ public class JellyfinDirectDeleter : IDirectDeleter
                 return $"{eps.Count} episode files deleted through Jellyfin (not managed by Sonarr)";
 
             case "Movie":
-                _library.DeleteItem(Item<Movie>(t.ItemId), new DeleteOptions { DeleteFileLocation = true }, true);
+                _library.DeleteItem(Item<Movie>(target.ItemId), new DeleteOptions { DeleteFileLocation = true }, true);
                 return "movie deleted through Jellyfin (not managed by Radarr)";
 
             default:
-                throw new InvalidOperationException("Unknown kind " + t.Kind);
+                throw new InvalidOperationException("Unknown kind " + target.Kind);
         }
     }
 
-    private List<Episode> SeasonEpisodes(Series series, DirectTarget t)
+    private List<Episode> SeasonEpisodes(Series series, DirectTarget target)
     {
         var episodes = _library.GetItemList(new InternalItemsQuery { IncludeItemTypes = new[] { BaseItemKind.Episode }, AncestorIds = new[] { series.Id }, Recursive = true, IsVirtualItem = false })
             .OfType<Episode>();
-        return t.SeasonId != null && Guid.TryParse(t.SeasonId, out var sid)
+        return target.SeasonId != null && Guid.TryParse(target.SeasonId, out var sid)
             ? episodes.Where(e => e.SeasonId == sid).ToList()
-            : episodes.Where(e => e.ParentIndexNumber == t.SeasonNumber).ToList();
+            : episodes.Where(e => e.ParentIndexNumber == target.SeasonNumber).ToList();
     }
 
     private static bool OwnFolder(Series series, Season season)

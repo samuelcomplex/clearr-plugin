@@ -1,0 +1,11 @@
+<Project>
+  <!-- Shared code-quality settings for every project in this repo. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- CI sets ContinuousIntegrationBuild=true: any warning fails the build there. -->
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

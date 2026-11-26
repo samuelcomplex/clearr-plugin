@@ -1,0 +1,18 @@
+# Weekly update pull requests for dependencies, so security fixes don't sit unnoticed.
+# (Clearr itself is a submodule kept current by the Release workflow.)
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # Pinned on purpose: the plugin is built against the oldest Jellyfin it supports.
+      - dependency-name: "Jellyfin.*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

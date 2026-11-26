@@ -126,7 +126,7 @@ public class ClearrController : ControllerBase
     [HttpGet("users")]
     public ActionResult Users() => J(JellyfinCompat.AllUsers(_host.Users).Select(u => new { id = JellyfinInternalSource.Key(u.Id), name = u.Username }));
 
-    private ContentResult J(object value, int status = 200) => new()
+    private static ContentResult J(object value, int status = 200) => new()
     {
         Content = JsonSerializer.Serialize(value, Json.Options),
         ContentType = "application/json",

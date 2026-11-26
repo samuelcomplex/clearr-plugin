@@ -1,0 +1,3 @@
+# Stand-ins for Jellyfin's own libraries: not our code style.
+[*.cs]
+dotnet_analyzer_diagnostic.severity = none

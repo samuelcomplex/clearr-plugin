@@ -1,0 +1,40 @@
+name: Lint
+
+# Code quality gate: analyzer warnings fail the build (against the real Jellyfin packages),
+# formatting must match .editorconfig, and the workflows are linted.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dotnet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Build with warnings as errors
+        run: dotnet build src/Jellyfin.Plugin.Clearr -c Release -p:ContinuousIntegrationBuild=true -nologo
+      - name: Formatting
+        run: dotnet format whitespace --folder --include src/Jellyfin.Plugin.Clearr tests/PluginTests --verify-no-changes
+      - name: Vulnerable NuGet packages
+        run: |
+          dotnet list src/Jellyfin.Plugin.Clearr package --vulnerable --include-transitive | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then exit 1; fi
+
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker://rhysd/actionlint:1.7.7
+        with:
+          args: -color
