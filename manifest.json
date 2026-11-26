@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.7",
+        "changelog": "Built from Clearr 5221059 (https://github.com/samuelcomplex/clearr/commit/5221059)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.7.zip",
+        "checksum": "871ca1de35738ed15f257e07876e6386",
+        "timestamp": "2026-11-26T19:47:44Z"
+      },
+      {
         "version": "2.2.0.6",
         "changelog": "Built from Clearr eba1e56 (https://github.com/samuelcomplex/clearr/commit/eba1e56)",
         "targetAbi": "10.11.0.0",
@@ -63,14 +71,6 @@
         "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.2.0.zip",
         "checksum": "e5986bee47d172ca599259a7928fdaed",
         "timestamp": "2026-11-26T01:00:00Z"
-      },
-      {
-        "version": "1.2.1.0",
-        "changelog": "Works on Jellyfin 10.11 and 12.x from one package. Includes all safety features: nothing is deleted unless Cleanup mode is Delete, sizes before deleting, per-run limit, Keep toggles.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.1.0.zip",
-        "checksum": "eadc93c1642bb16182d2eeeab3ebe553",
-        "timestamp": "2026-11-26T00:30:00Z"
       }
     ]
   }
