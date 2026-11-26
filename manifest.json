@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.6",
+        "changelog": "Built from Clearr eba1e56 (https://github.com/samuelcomplex/clearr/commit/eba1e56)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.6.zip",
+        "checksum": "8c1445bb3e8e46dad889927bf88b32c0",
+        "timestamp": "2026-11-26T19:38:23Z"
+      },
+      {
         "version": "2.2.0.5",
         "changelog": "Built from Clearr 80c6e43 (https://github.com/samuelcomplex/clearr/commit/80c6e43)",
         "targetAbi": "10.11.0.0",
@@ -63,14 +71,6 @@
         "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.1.0.zip",
         "checksum": "eadc93c1642bb16182d2eeeab3ebe553",
         "timestamp": "2026-11-26T00:30:00Z"
-      },
-      {
-        "version": "1.2.0.0",
-        "changelog": "Keep toggle for shows and seasons; Delete eligible now only appears in Delete mode.",
-        "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.0.0.zip",
-        "checksum": "62b2ba8d9009c78a56d801b543d2249e",
-        "timestamp": "2026-11-26T00:00:00Z"
       }
     ]
   }
