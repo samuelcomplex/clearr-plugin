@@ -12,7 +12,7 @@
         "version": "2.2.0.2",
         "changelog": "Built from Clearr bcc065e (https://github.com/samuelcomplex/clearr/commit/bcc065e)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/clearr_2.2.0.2.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.2.zip",
         "checksum": "6492561a0fb80c9d9d0a0acf27daef8b",
         "timestamp": "2026-11-26T18:19:34Z"
       },
@@ -20,7 +20,7 @@
         "version": "2.2.0.1",
         "changelog": "Built from Clearr bcc065e (https://github.com/samuelcomplex/clearr/commit/bcc065e)",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/clearr_2.2.0.1.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.1.zip",
         "checksum": "af3e93f693ef492f8718f04448e0bbfe",
         "timestamp": "2026-11-26T18:15:12Z"
       },
@@ -28,7 +28,7 @@
         "version": "1.2.2.0",
         "changelog": "Plugin logo bundled in the package, so it shows on the Plugins page right after installing.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.2.0.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.2.0.zip",
         "checksum": "e5986bee47d172ca599259a7928fdaed",
         "timestamp": "2026-11-26T01:00:00Z"
       },
@@ -36,7 +36,7 @@
         "version": "1.2.1.0",
         "changelog": "Works on Jellyfin 10.11 and 12.x from one package. Includes all safety features: nothing is deleted unless Cleanup mode is Delete, sizes before deleting, per-run limit, Keep toggles.",
         "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.1.0.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.1.0.zip",
         "checksum": "eadc93c1642bb16182d2eeeab3ebe553",
         "timestamp": "2026-11-26T00:30:00Z"
       },
@@ -44,7 +44,7 @@
         "version": "1.2.0.0",
         "changelog": "Keep toggle for shows and seasons; Delete eligible now only appears in Delete mode.",
         "targetAbi": "12.0.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/watchtracker_1.2.0.0.zip",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.0.0.zip",
         "checksum": "62b2ba8d9009c78a56d801b543d2249e",
         "timestamp": "2026-11-26T00:00:00Z"
       }

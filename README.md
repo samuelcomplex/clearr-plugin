@@ -1,7 +1,7 @@
 # Clearr for Jellyfin
 
-[![Sync with Clearr and release](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/release.yml/badge.svg)](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/release.yml)
-[![Compatibility check](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml)
+[![Sync with Clearr and release](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml)
+[![Compatibility check](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml)
 
 ![Clearr](https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png)
 
@@ -29,7 +29,7 @@ Everything else is the same code: per-person progress, dropped-off viewers, Keep
 ## Install
 
 1. In Jellyfin, go to **Dashboard → Plugins → Repositories**, click **+** and add:
-   `https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/manifest.json`
+   `https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/manifest.json`
 2. Under **Catalog**, open **Clearr**, click **Install**, and restart Jellyfin.
 3. Open **Clearr** in the dashboard menu. Connect **Sonarr** and/or **Radarr** under **Settings**, test them, and save.
 
@@ -73,7 +73,7 @@ The weekly [**compatibility check**](.github/workflows/compatibility.yml) builds
 ## Building
 
 ```
-git clone --recursive https://github.com/samuelcomplex/jellyfin-plugin-watchtracker
+git clone --recursive https://github.com/samuelcomplex/clearr-plugin
 dotnet build src/Jellyfin.Plugin.Clearr -c Release                    # official Jellyfin 10.11 packages
 dotnet run --project tests/PluginTests -p:UseStubs=true               # offline tests against the stubs in stubs/
 ```

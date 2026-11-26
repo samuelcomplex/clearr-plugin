@@ -11,7 +11,7 @@ Prints the version on stdout (last line).
 import hashlib, json, os, re, subprocess, sys, zipfile, datetime
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-REPO_RAW = "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main"
+REPO_RAW = "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main"
 GUID = "94d2b53c-7f01-48dd-8726-c645ebe5ff9b"
 TARGET_ABI = "10.11.0.0"
 KEEP_VERSIONS = 8
