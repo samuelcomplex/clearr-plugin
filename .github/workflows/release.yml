@@ -24,7 +24,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -43,7 +43,7 @@ jobs:
             echo "Clearr unchanged ($after); nothing to release."
           fi
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         if: steps.sync.outputs.release == 'true'
         with:
           dotnet-version: |
