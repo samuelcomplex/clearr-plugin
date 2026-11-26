@@ -6,12 +6,25 @@ CLIENT='MediaBrowser Client="Clearr CI", Device="CI", DeviceId="clearr-plugin-ci
 fail=0
 check() { if eval "$2"; then echo "PASS $1"; else echo "FAIL $1"; fail=1; fi; }
 
-for i in $(seq 1 90); do curl -sf "$JF/System/Info/Public" >/dev/null && break; sleep 2; done
-echo "Jellyfin $(curl -sf "$JF/System/Info/Public" | jq -r .Version)"
-curl -sf -X POST "$JF/Startup/Configuration" -H "Authorization: $CLIENT" -H 'Content-Type: application/json' -d '{"UICulture":"en-US","MetadataCountryCode":"US","PreferredMetadataLanguage":"en"}'
-curl -sf "$JF/Startup/User" -H "Authorization: $CLIENT" >/dev/null || true
-curl -sf -X POST "$JF/Startup/User" -H "Authorization: $CLIENT" -H 'Content-Type: application/json' -d '{"Name":"admin","Password":"ci-pass-1"}'
-curl -sf -X POST "$JF/Startup/Complete" -H "Authorization: $CLIENT"
+# Jellyfin answers before it has finished starting, so wait for a real version and an open wizard.
+VER=null
+for i in $(seq 1 120); do
+  VER=$(curl -s "$JF/System/Info/Public" | jq -r '.Version // empty' 2>/dev/null || true)
+  [ -n "$VER" ] && [ "$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: $CLIENT" "$JF/Startup/Configuration")" = 200 ] && break
+  sleep 2
+done
+echo "Jellyfin ${VER:-unknown}"
+step() { # retry a wizard call; show the response if it never succeeds
+  for i in $(seq 1 15); do
+    code=$(curl -s -o /tmp/step -w '%{http_code}' -X POST "$JF/$1" -H "Authorization: $CLIENT" -H 'Content-Type: application/json' ${2:+-d "$2"})
+    case "$code" in 2*) return 0;; esac; sleep 2
+  done
+  echo "Wizard step $1 failed: HTTP $code $(head -c 300 /tmp/step)"; exit 1
+}
+step Startup/Configuration '{"UICulture":"en-US","MetadataCountryCode":"US","PreferredMetadataLanguage":"en"}'
+curl -s "$JF/Startup/User" -H "Authorization: $CLIENT" >/dev/null || true
+step Startup/User '{"Name":"admin","Password":"ci-pass-1"}'
+step Startup/Complete
 for i in $(seq 1 30); do
   TOKEN=$(curl -sf -X POST "$JF/Users/AuthenticateByName" -H "Authorization: $CLIENT" -H 'Content-Type: application/json' -d '{"Username":"admin","Pw":"ci-pass-1"}' | jq -r .AccessToken || true)
   [ -n "${TOKEN:-}" ] && [ "$TOKEN" != "null" ] && break; sleep 2
