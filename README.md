@@ -2,6 +2,7 @@
 
 [![Sync with Clearr and release](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml)
 [![Compatibility check](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml)
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors)](https://github.com/sponsors/samuelcomplex)
 
 ![Clearr](https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png)
 
@@ -77,3 +78,7 @@ git clone --recursive https://github.com/samuelcomplex/clearr-plugin
 dotnet build src/Jellyfin.Plugin.Clearr -c Release                    # official Jellyfin 10.11 packages
 dotnet run --project tests/PluginTests -p:UseStubs=true               # offline tests against the stubs in stubs/
 ```
+
+## Support
+
+If Clearr is useful to you, you can [sponsor me on GitHub](https://github.com/sponsors/samuelcomplex). GitHub takes no fee on personal sponsorships.
