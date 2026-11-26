@@ -82,3 +82,9 @@ dotnet run --project tests/PluginTests -p:UseStubs=true               # offline 
 ## Support
 
 If Clearr is useful to you, you can [sponsor me on GitHub](https://github.com/sponsors/samuelcomplex). GitHub takes no fee on personal sponsorships.
+
+## License
+
+Copyright (C) 2026 samuelcomplex
+
+This project is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License v3.0](LICENSE) as published by the Free Software Foundation. In short: you may use, change and share it, but any version you share must keep this license, credit the original, and include its source code.
