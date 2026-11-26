@@ -20,14 +20,13 @@ public class CleanupTask : IScheduledTask
 
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        var mode = _host.Settings.Get().Mode;
-        if (mode == CleanupMode.Off)
+        if (ClearrEngine.ScheduledDryRun(_host.Settings.Get().Mode) is not bool dryRun)
         {
             progress.Report(100);
             return;
         }
 
-        var r = await _host.Engine.CleanupAsync(dryRun: mode != CleanupMode.Delete, record: true, cancellationToken).ConfigureAwait(false);
+        var r = await _host.Engine.CleanupAsync(dryRun, record: true, cancellationToken).ConfigureAwait(false);
         _host.LastRunAt = DateTime.UtcNow;
         _host.LastRunSummary = $"{(r.DryRun ? "Dry run" : "Cleanup")}: {r.Actions.Count(a => a.Action is "Deleted" or "WouldDelete")} item(s), {r.TotalBytes / 1073741824.0:0.0} GB";
         progress.Report(100);
