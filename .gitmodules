@@ -1,0 +1,3 @@
+[submodule "external/clearr"]
+	path = external/clearr
+	url = https://github.com/samuelcomplex/clearr

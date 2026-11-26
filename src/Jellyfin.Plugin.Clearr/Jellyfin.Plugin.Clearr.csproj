@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Clearr as a Jellyfin plugin. All decision logic, Sonarr/Radarr handling and the UI come from Clearr.Core
+    (external/clearr, a git submodule of github.com/samuelcomplex/clearr) — this project only adds the
+    Jellyfin-specific parts: reading the library from Jellyfin's internals, deleting through Jellyfin
+    (opt-in fallback), the dashboard page, the scheduled task and the API.
+
+    Release / CI build:   dotnet build -c Release                     (official Jellyfin.Controller 10.11 → runs on 10.11 and 12.x)
+                          dotnet build -p:JellyfinVersion=12.* -p:JellyfinTargetFramework=net10.0   (compatibility check)
+    Offline build:        dotnet build -c Release -p:UseStubs=true     (signature-identical stubs in ../../stubs)
+  -->
+
+  <PropertyGroup>
+    <JellyfinVersion Condition="'$(JellyfinVersion)' == ''">10.11.0</JellyfinVersion>
+    <JellyfinTargetFramework Condition="'$(JellyfinTargetFramework)' == ''">net9.0</JellyfinTargetFramework>
+    <TargetFramework Condition="'$(UseStubs)' != 'true'">$(JellyfinTargetFramework)</TargetFramework>
+    <TargetFramework Condition="'$(UseStubs)' == 'true'">net8.0</TargetFramework>
+    <AssemblyName>Jellyfin.Plugin.Clearr</AssemblyName>
+    <RootNamespace>Jellyfin.Plugin.Clearr</RootNamespace>
+    <Version>2.0.0</Version>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../external/clearr/src/Clearr.Core/Clearr.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseStubs)' != 'true'">
+    <PackageReference Include="Jellyfin.Controller" Version="$(JellyfinVersion)">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseStubs)' == 'true'">
+    <ProjectReference Include="../../stubs/MediaBrowser.Controller/MediaBrowser.Controller.csproj" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+
+</Project>

@@ -1,9 +1,9 @@
 [
   {
     "guid": "94d2b53c-7f01-48dd-8726-c645ebe5ff9b",
-    "name": "Watch Tracker",
-    "overview": "Per-user show progress, abandon flags and automatic cleanup",
-    "description": "Tracks who has started and finished each show and season, flags viewers who stopped watching, and removes seasons or shows once everyone who started them has finished. Safe by default: nothing is deleted unless Cleanup mode is set to Delete. Works on Jellyfin 10.11 and 12.x.",
+    "name": "Clearr",
+    "overview": "Clears shows, seasons and movies once everyone who started them has finished",
+    "description": "Clearr for Jellyfin: tracks each person's progress, flags viewers who dropped off, and clears finished seasons, shows and movies through Sonarr/Radarr (or Jellyfin, if you allow it). Same engine and UI as the Clearr app. Safe by default: nothing is deleted unless Cleanup mode is Delete.",
     "owner": "samuelcomplex",
     "category": "General",
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/docs/logo/logo.png",

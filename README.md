@@ -1,197 +1,79 @@
-# Watch Tracker – Jellyfin plugin
+# Clearr for Jellyfin
 
+[![Sync with Clearr and release](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/release.yml/badge.svg)](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/release.yml)
 [![Compatibility check](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/jellyfin-plugin-watchtracker/actions/workflows/compatibility.yml)
 
-![Watch Tracker](docs/logo/logo.png)
+![Clearr](https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png)
 
-Tracks who has started each TV show and season, and who has finished it. It flags viewers who gave up, and can delete seasons or whole shows once everyone who started them has finished.
+**[Clearr](https://github.com/samuelcomplex/clearr) as a Jellyfin plugin.** It clears a show, season or movie once everyone who started watching it has finished: the same engine and the same UI as the Clearr app, running inside Jellyfin.
 
-## Compatibility
+*Formerly **Watch Tracker**. It's the same plugin ID, so it installs as an update and brings your settings, keep list and history along.*
 
-| Jellyfin | Status |
-|---|---|
-| **12.x** (latest; tested on 12.4) | ✅ Supported, in daily use |
-| **10.11.x** | ✅ Supported. The API calls the plugin makes are identical to 12.x |
-| 10.10 and older | ❌ Not supported |
+![Clearr](https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/screenshots/shows.png)
 
-One package works on both 10.11 and 12.x.
+## App or plugin?
 
-### Staying compatible
+Both do the same thing. Pick one, and don't run both in Delete mode.
 
-A [compatibility check](.github/workflows/compatibility.yml) runs every Monday, on every change, and on demand from the **Actions** tab. It:
+| | Clearr app (Docker) | Clearr plugin (this repo) |
+|---|---|---|
+| Runs | As its own container, next to Sonarr/Radarr | Inside Jellyfin |
+| Reads progress | Jellyfin's API (needs an API key) | Jellyfin directly |
+| Daily run | Built-in schedule | *Dashboard → Scheduled Tasks → Clearr* |
+| Settings and UI | Its own web UI | *Dashboard → Clearr* (same UI) |
+| Password, API key, HTTPS | Yes | Not needed (Jellyfin handles sign-in) |
+| Removes | Through Sonarr/Radarr | Through Sonarr/Radarr, **plus an optional Jellyfin fallback** for items they don't manage |
 
-- builds the plugin against the official Jellyfin packages for **10.11**, the newest **12.x** and the **newest release overall**, so a new major version is tested automatically
-- runs the logic tests
-- starts a real **Sonarr**, adds a show, and checks that the plugin's unmonitor calls still work, including that the show stays monitored
-
-Jellyfin pre-releases and Sonarr's `develop` (currently the v5 beta) are also tested as an early warning. They don't fail the run.
-
-If a required check fails, the workflow opens a **"Compatibility check failed"** issue in this repo, which GitHub emails to the owner.
-
-## Features
-
-- **Per-user progress** for every show and season: *Not started*, *In progress* or *Finished*. It uses Jellyfin's own watched and resume data, so existing watch history counts from day one.
-- **Flags** for viewers who went quiet: **Sampled** (watched only a few episodes), **Stalled** (got partway, then stopped) and **Mid-episode** (stopped in the middle of an episode).
-- **Automatic cleanup** of seasons, or whole shows, once everyone who started them has finished.
-- **Keep** a show or season with one click, so it's never deleted.
-- **Safety first**: it starts in Dry run mode, shows sizes before anything is deleted, and has a per-run size limit and a full history log.
-- **Sonarr integration**: deleted seasons are unmonitored so they aren't downloaded again, while future seasons keep coming.
-
-![Progress tab: each show with every viewer's status, flags and cleanup readiness](docs/screenshots/progress.png)
-
-*The Progress tab. Green chips are finished viewers, blue are still watching and orange are flagged. Click a show to see its seasons and why each one is or isn't ready to remove.*
+Everything else is the same code: per-person progress, dropped-off viewers, Keep (with Sonarr/Radarr tags), grace period, newest-season protection, previews with sizes, the per-run size limit, the new-download guard and history. See the [Clearr README](https://github.com/samuelcomplex/clearr#readme) for how it decides.
 
 ## Install
 
-### From the plugin repository (recommended)
+1. In Jellyfin, go to **Dashboard → Plugins → Repositories**, click **+** and add:
+   `https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/manifest.json`
+2. Under **Catalog**, open **Clearr**, click **Install**, and restart Jellyfin.
+3. Open **Clearr** in the dashboard menu. Connect **Sonarr** and/or **Radarr** under **Settings**, test them, and save.
 
-1. In Jellyfin, go to **Dashboard → Plugins → Repositories** and click **+**.
-2. Add the repository:
-   - Name: `Watch Tracker`
-   - URL: `https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/manifest.json`
-3. Go to the **Catalog**, open **Watch Tracker**, click **Install**, then restart Jellyfin.
+It starts in **Dry run**. Nothing is ever removed unless *Cleanup mode* is **Delete**.
 
-Updates then show up in the Catalog like any other plugin.
+Works with **Jellyfin 10.11 and 12.x** from one package.
 
-### Manually
+## The Jellyfin fallback (plugin only)
 
-1. Download the newest `watchtracker_x.y.z.zip` from the [`dist`](dist) folder.
-2. Create a folder named `Watch Tracker` in Jellyfin's plugin folder and unzip the file into it:
-   - Docker: `<your /config volume>/data/plugins/` (some images use `<config>/plugins/`)
-   - Windows: `%ProgramData%\Jellyfin\Server\plugins\`
-3. Restart Jellyfin.
+*Settings → Connections → "Also remove items Sonarr/Radarr don't manage, through Jellyfin"* is **off by default**.
 
-After installing, **Watch Tracker** appears in the dashboard side menu.
+When it's on, finished items that Sonarr/Radarr don't know about are deleted from disk by Jellyfin itself:
+- a season's folder, if it has its own folder inside the show; otherwise just that season's episode files,
+- a whole show's folder, never if another show is inside it,
+- a movie's folder (or just its file, if it shares a folder).
 
-## Safety
+Such items show a **via Jellyfin** label in the lists. They aren't unmonitored anywhere, so if another tool manages them they may come back.
 
-The plugin starts in **Dry run** mode. **Nothing is ever deleted unless *Cleanup mode* is set to *Delete*.**
+## How it stays in sync with Clearr
 
-- **Cleanup mode** applies to everything: the daily scheduled task and the *Delete eligible now* button. In *Off* or *Dry run*, the button is hidden and the server refuses every deletion request.
-- **Preview cleanup** lists what would be deleted, with the size of each item and a total.
-- **Delete eligible now** (Delete mode only) shows that same list and total first, and deletes nothing unless you confirm.
-- **Max GB deleted per run** (default 50 GB) limits how much a single run can delete. Anything over the limit waits for the next run.
-- **History** records every deletion, dry-run hit and failure, with sizes.
+This repo contains only the Jellyfin-specific parts:
+- the library reader,
+- the fallback deleter,
+- the dashboard page frame,
+- the scheduled task,
+- the API that the shared UI talks to.
 
-Recommended: leave it in Dry run for a week or so, check the History tab and mark anything you want to hold onto as **Keep**. Then switch to Delete.
+Everything else comes from Clearr itself. [`external/clearr`](external) is a git submodule of the Clearr repo, and the plugin compiles Clearr's shared `Clearr.Core` library directly. The UI is Clearr's own, served from that library.
 
-![Preview cleanup: list of what would be deleted, with sizes and a total](docs/screenshots/preview.png)
+The [**Sync with Clearr and release**](.github/workflows/release.yml) workflow checks Clearr every 6 hours. When Clearr has new commits, it:
+1. pulls them,
+2. runs the plugin tests,
+3. builds against the official Jellyfin 10.11 packages,
+4. packages the result as `2.<Clearr version>.<n>`,
+5. adds it to `manifest.json`.
 
-*Preview cleanup lists each item, its size and why it qualifies. Anything over the per-run limit is listed separately and waits for the next run.*
+Jellyfin then offers it as an update. Every release's changelog links to the exact Clearr commit it was built from.
 
-## How it decides
-
-### Status per viewer
-
-| Status | Meaning |
-|---|---|
-| **Not started** | No episode played or partly played |
-| **In progress** | Some episodes played, not all |
-| **Finished** | Every episode in the library is marked played |
-
-### Flags
-
-A viewer who is *In progress* and has made no progress for **30 days** (configurable) is flagged:
-
-- **Sampled**: they watched **3 episodes or fewer** (configurable).
-- **Stalled**: they got further than that, then stopped.
-- **Mid-episode**: added to either flag when their last activity was stopping partway through an episode.
-
-### When a season can be removed
-
-All of these must be true:
-
-- at least one person has started it
-- everyone who started it has finished it. Flagged viewers count as "not finished" unless you untick *Flagged viewers still block cleanup*.
-- the **grace period** (default 7 days) has passed since the last person finished
-- neither the season nor its show is marked **Keep**
-- it isn't the **newest season of a show that's still Continuing**, so a season that's still airing is never removed
-
-### When a whole show can be removed
-
-The same rules apply across all its seasons. In addition, by default:
-
-- the show's status must be **Ended**. Continuing shows only lose finished seasons.
-- none of its seasons is marked Keep. The other seasons can still be removed one by one.
-
-Specials (season 0) are ignored unless you enable them. They are removed when the whole show is.
-
-## Keeping shows and seasons
-
-Click **Keep** next to a show or a season on the Progress tab, and it is never deleted. Click **Kept ✓** to undo.
-
-- The plugin adds the `keep` tag in Jellyfin, so you can see and filter by it there.
-- It also stores the keep itself, so the protection survives a "Replace all metadata" refresh that wipes tags.
-- Adding the tag yourself in Jellyfin (*Edit metadata → Tags*) works too.
-
-## What gets deleted
-
-- **Season with its own folder** (`Show/Season 02/`): the folder is removed, including subtitles, nfo files and images.
-- **Flat layout** (all episodes directly in the show folder): only that season's episode files and their sidecar files are deleted.
-- **Whole show**: the show folder is removed. As a safeguard, nothing is deleted if another show is found inside that folder.
-
-Jellyfin deletes permanently; there is no recycle bin.
-
-## Sonarr
-
-If you enter your Sonarr URL and API key in Settings, the plugin unmonitors what it is about to delete before deleting it:
-
-- **A season**: that season is unmonitored.
-- **A whole show**: every existing season is unmonitored. The show itself **stays monitored**, so future seasons still download, as long as the show's *Monitor New Seasons* setting in Sonarr is *All*.
-- If Sonarr is set up but can't be reached, or rejects the request, **nothing is deleted** and the History tab shows *Failed*.
-- If Sonarr is **not** set up (no URL or API key, or *Unmonitor in Sonarr* is unticked), this step is skipped and deletion goes ahead. Sonarr then still monitors those episodes, and may download them again.
-- Shows that aren't in Sonarr, or have no TVDB id in Jellyfin, are deleted without touching Sonarr. History notes this.
-
-*Test Sonarr* checks the URL and key as typed. You don't need to save first. The URL works with or without `http://`.
-
-## Settings reference
-
-![Settings tab](docs/screenshots/settings.png)
-
-| Setting | Default | What it does |
-|---|---|---|
-| Cleanup mode | Dry run | Off / Dry run / Delete. Applies to the scheduled task and the button |
-| Max GB deleted per run | 50 | 0 = no limit |
-| Delete finished seasons | On | |
-| Delete whole shows when finished | On | |
-| Only delete whole shows that have Ended | On | |
-| Never delete the newest season of a continuing show | On | |
-| Count specials (season 0) | Off | |
-| Grace period (days) | 7 | Days to wait after the last viewer finishes |
-| Keep tag | `keep` | Tag that protects a show or season |
-| Flag after days without progress | 30 | |
-| "Sampled" episode limit | 3 | |
-| Flagged viewers still block cleanup | On | |
-| Write flags as Jellyfin tags | Off | Adds tags like `wt:stalled:Anna` and `wt:cleanup-ready` to shows |
-| Ignored users | none | For example a test or kids account |
-| Sonarr URL / API key | empty | Optional, see above |
-
-## Where to find things
-
-- **Progress tab**: every show with each viewer's status and flags, and the reason each season is or isn't ready. Filters: ready, flagged, watching, untouched and kept.
-- **Settings tab**: everything in the table above.
-- **History tab**: what was deleted (or would have been), when, how big it was, and why.
-- **Dashboard → Scheduled Tasks → Watch Tracker → Clean up finished shows**: runs daily at 04:00. You can change the time there.
-
-![History tab: deletions, dry-run entries and failures with sizes and reasons](docs/screenshots/history.png)
-
-*The screenshots use made-up demo data ([`docs/screenshots/demo-data.json`](docs/screenshots/demo-data.json)).*
+The weekly [**compatibility check**](.github/workflows/compatibility.yml) builds against Jellyfin 10.11, the newest 12.x and the newest release overall (plus pre-releases as an early warning). It then installs the plugin into **real Jellyfin containers** (10.11.11 and latest) and checks that it loads, its API answers, the delete guard holds and the scheduled task is registered. Clearr's own repo tests the shared engine end to end against real Sonarr and Radarr. Failures open a GitHub issue.
 
 ## Building
 
-Normal build against the official Jellyfin packages (needs internet access to NuGet):
-
 ```
-dotnet build src/Jellyfin.Plugin.WatchTracker -c Release
+git clone --recursive https://github.com/samuelcomplex/jellyfin-plugin-watchtracker
+dotnet build src/Jellyfin.Plugin.Clearr -c Release                    # official Jellyfin 10.11 packages
+dotnet run --project tests/PluginTests -p:UseStubs=true               # offline tests against the stubs in stubs/
 ```
-
-Offline build against the bundled API stubs in `stubs/`. Their signatures are copied from Jellyfin 10.11.11 and checked against 12.4:
-
-```
-dotnet build src/Jellyfin.Plugin.WatchTracker -c Release -p:UseStubs=true
-```
-
-Tests:
-
-- `tests/LogicTests` runs scripted viewing histories through the analyzer, keep handling and cleanup, against temporary folders.
-- `tests/SonarrTest`, together with `tests/fake_sonarr.py`, checks the Sonarr calls.

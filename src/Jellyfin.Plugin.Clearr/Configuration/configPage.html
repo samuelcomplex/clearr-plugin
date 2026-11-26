@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Clearr</title>
+</head>
+<body>
+<div id="ClearrPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-button">
+    <style>
+        #ClearrPage .clr-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: .6em 0 1.2em; }
+        #ClearrPage .clr-head img { width: 32px; height: 32px; }
+        #ClearrPage .clr-head h2 { margin: 0; font-size: 1.5em; }
+        #ClearrPage .clr-tabs { display: flex; gap: .5em; flex-wrap: wrap; margin-left: auto; }
+        #ClearrPage .clr-tab { padding: .45em 1.1em; border-radius: 2em; border: 1px solid rgba(128,128,128,.4); background: transparent; color: inherit; cursor: pointer; font: inherit; }
+        #ClearrPage .clr-tab.active { background: #2bc4a5; border-color: #2bc4a5; color: #062019; font-weight: 600; }
+        #ClearrPage .clearr h1 { display: none; }
+    </style>
+    <div data-role="content">
+        <div class="content-primary">
+            <div class="clr-head">
+                <img id="clrLogo" alt="">
+                <h2>Clearr</h2>
+                <div class="clr-tabs">
+                    <button type="button" class="clr-tab active" data-tab="shows">Shows</button>
+                    <button type="button" class="clr-tab" data-tab="movies">Movies</button>
+                    <button type="button" class="clr-tab" data-tab="history">History</button>
+                    <button type="button" class="clr-tab" data-tab="settings">Settings</button>
+                </div>
+            </div>
+            <div id="clrRoot">Loading Clearr…</div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    (function () {
+        // The page is just a frame: the UI itself is Clearr's shared UI, served by this plugin from Clearr.Core.
+        var page = document.querySelector('#ClearrPage');
+        var ui = null;
+
+        function url(p) { return ApiClient.getUrl('Clearr/' + p); }
+
+        function api(path, method, body) {
+            var headers = { 'Authorization': 'MediaBrowser Token="' + ApiClient.accessToken() + '"' };
+            if (body !== undefined) headers['Content-Type'] = 'application/json';
+            return fetch(url(path), { method: method || 'GET', headers: headers, body: body !== undefined ? JSON.stringify(body) : undefined })
+                .then(function (r) {
+                    return r.json().catch(function () { return {}; }).then(function (j) {
+                        if (!r.ok) { var e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; e.body = j; throw e; }
+                        return j;
+                    });
+                });
+        }
+
+        function load(tag, attrs) {
+            return new Promise(function (resolve, reject) {
+                var id = 'clearr-' + tag;
+                if (document.getElementById(id)) { resolve(); return; }
+                var el = document.createElement(tag === 'css' ? 'link' : 'script');
+                el.id = id;
+                if (tag === 'css') { el.rel = 'stylesheet'; el.href = attrs; } else { el.src = attrs; }
+                el.onload = resolve; el.onerror = reject;
+                document.head.appendChild(el);
+            });
+        }
+
+        function select(tab) {
+            page.querySelectorAll('.clr-tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
+            if (ui) ui.show(tab);
+        }
+
+        page.querySelectorAll('.clr-tab').forEach(function (b) {
+            b.addEventListener('click', function () { select(b.getAttribute('data-tab')); });
+        });
+
+        page.addEventListener('pageshow', function () {
+            page.querySelector('#clrLogo').src = url('ui/logo.svg');
+            Promise.all([load('css', url('ui/clearr-ui.css')), load('script', url('ui/clearr-ui.js'))]).then(function () {
+                ui = window.ClearrUI.mount(page.querySelector('#clrRoot'), {
+                    host: 'plugin',
+                    api: api,
+                    onNavigate: select
+                });
+                select('shows');
+            }).catch(function () {
+                page.querySelector('#clrRoot').textContent = 'Could not load the Clearr UI.';
+            });
+        });
+    })();
+    </script>
+</div>
+</body>
+</html>

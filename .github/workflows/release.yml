@@ -1,0 +1,73 @@
+name: Sync with Clearr and release
+
+# Keeps the plugin in step with Clearr (github.com/samuelcomplex/clearr, the external/clearr submodule).
+# Every 6 hours it checks Clearr for new commits; when there are any (or the plugin itself changed),
+# it tests, builds against the official Jellyfin 10.11 packages (runs on 10.11 and 12.x), packages,
+# adds the version to manifest.json and pushes — Jellyfin then offers it as an update.
+
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["src/**", "stubs/**", "tests/**", "tools/**", ".github/workflows/release.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: Pull the latest Clearr
+        id: sync
+        run: |
+          before=$(git -C external/clearr rev-parse HEAD)
+          git submodule update --remote external/clearr
+          after=$(git -C external/clearr rev-parse HEAD)
+          echo "clearr=$(git -C external/clearr rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          if [ "$before" != "$after" ] || [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "Clearr $before -> $after"
+          else
+            echo "release=false" >> $GITHUB_OUTPUT
+            echo "Clearr unchanged ($after); nothing to release."
+          fi
+
+      - uses: actions/setup-dotnet@v5
+        if: steps.sync.outputs.release == 'true'
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Plugin tests
+        if: steps.sync.outputs.release == 'true'
+        run: dotnet run --project tests/PluginTests -p:UseStubs=true
+
+      - name: Build against Jellyfin 10.11
+        if: steps.sync.outputs.release == 'true'
+        run: |
+          V=$(python3 tools/package.py /dev/null --dry)
+          echo "VERSION=$V" >> $GITHUB_ENV
+          dotnet build src/Jellyfin.Plugin.Clearr -c Release -o out "-p:Version=$V"
+
+      - name: Package and publish
+        if: steps.sync.outputs.release == 'true'
+        run: |
+          PLUGIN_VERSION=$VERSION python3 tools/package.py out
+          git config user.name "samuelcomplex"
+          git config user.email "samuelcomplex@users.noreply.github.com"
+          git add external/clearr dist manifest.json
+          if git diff --cached --quiet; then echo "Nothing changed"; exit 0; fi
+          git commit -m "Release $VERSION (Clearr ${{ steps.sync.outputs.clearr }})"
+          git push

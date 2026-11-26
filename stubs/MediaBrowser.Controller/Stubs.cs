@@ -29,6 +29,7 @@ namespace MediaBrowser.Controller.Library
         BaseItem? GetItemById(Guid id);
         IReadOnlyList<BaseItem> GetItemList(InternalItemsQuery query);
         void DeleteItem(BaseItem item, DeleteOptions options, bool notifyParentItem);
+        void QueueLibraryScan();
     }
 
     public interface IUserManager
@@ -56,6 +57,9 @@ namespace MediaBrowser.Controller.Entities
         public int? IndexNumber { get; set; }
         public int? ParentIndexNumber { get; set; }
         public Dictionary<string, string> ProviderIds { get; set; } = new();
+        public int? ProductionYear { get; set; }
+        public bool IsInMixedFolder { get; set; }
+        public virtual string ContainingFolderPath => System.IO.Path.GetDirectoryName(Path) ?? string.Empty;
         public virtual Task UpdateToRepositoryAsync(ItemUpdateType updateReason, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
@@ -79,6 +83,11 @@ namespace MediaBrowser.Controller.Entities
         public Guid ParentId { get; set; }
         public Guid[] AncestorIds { get; set; } = Array.Empty<Guid>();
     }
+}
+
+namespace MediaBrowser.Controller.Entities.Movies
+{
+    public class Movie : Video { }
 }
 
 namespace MediaBrowser.Controller.Entities.TV

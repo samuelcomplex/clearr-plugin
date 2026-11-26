@@ -1,100 +1,84 @@
 name: Compatibility check
 
-# Builds Watch Tracker against current Jellyfin releases and tests the Sonarr calls
-# against a real Sonarr, every Monday and on demand. On failure it opens an issue,
-# which GitHub emails to the repo owner.
+# Weekly: builds the plugin against current and upcoming Jellyfin packages, then installs the
+# release build into REAL Jellyfin containers and checks it loads and its API answers.
+# Clearr's own repo tests the shared engine end-to-end against real Sonarr/Radarr.
+# Pre-releases run as a non-failing early warning. On failure it opens a GitHub issue.
 
 on:
   schedule:
-    - cron: "17 5 * * 1" # Mondays 05:17 UTC
+    - cron: "17 5 * * 1"
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths: ["src/**", "tests/**", "stubs/**", ".github/workflows/**"]
 
 permissions:
   contents: read
   issues: write
 
 jobs:
-  jellyfin:
-    name: Jellyfin ${{ matrix.label }}
+  build:
+    name: Build · Jellyfin ${{ matrix.label }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { label: "10.11.x",          version: "10.11.*", tfm: net9.0,  experimental: false }
-          - { label: "12.x",             version: "12.*",    tfm: net10.0, experimental: false }
-          - { label: "newest release",   version: "*",       tfm: net10.0, experimental: false }
-          - { label: "pre-release",      version: "*-*",     tfm: net10.0, experimental: true }
+          - { label: "10.11.x",        version: "10.11.*", tfm: net9.0,  experimental: false }
+          - { label: "12.x",           version: "12.*",    tfm: net10.0, experimental: false }
+          - { label: "newest release", version: "*",       tfm: net10.0, experimental: false }
+          - { label: "pre-release",    version: "*-*",     tfm: net10.0, experimental: true }
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: true
+      - run: git submodule update --remote external/clearr
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             9.0.x
             10.0.x
-      - name: Build against Jellyfin.Controller ${{ matrix.version }}
-        run: >
-          dotnet build src/Jellyfin.Plugin.WatchTracker -c Release
-          "-p:JellyfinVersion=${{ matrix.version }}"
-          "-p:JellyfinTargetFramework=${{ matrix.tfm }}"
-      - name: Show resolved Jellyfin version
-        if: always()
-        run: grep -o '"Jellyfin.Controller/[^"]*"' src/Jellyfin.Plugin.WatchTracker/obj/project.assets.json | head -1 || true
+      - run: dotnet build src/Jellyfin.Plugin.Clearr -c Release "-p:JellyfinVersion=${{ matrix.version }}" "-p:JellyfinTargetFramework=${{ matrix.tfm }}"
+      - if: always()
+        run: grep -o '"Jellyfin.Controller/[^"]*"' src/Jellyfin.Plugin.Clearr/obj/project.assets.json | head -1 || true
 
-  logic-tests:
-    name: Logic tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 8.0.x
-      - run: dotnet run --project tests/LogicTests -p:UseStubs=true
-
-  sonarr:
-    name: Sonarr ${{ matrix.tag }}
+  load:
+    name: Loads in Jellyfin ${{ matrix.jellyfin }}
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { tag: latest,  experimental: false }
-          - { tag: develop, experimental: true }
+          - { jellyfin: "10.11.11", experimental: false }
+          - { jellyfin: latest,     experimental: false }
+          - { jellyfin: unstable,   experimental: true }
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: true
+      - run: git submodule update --remote external/clearr
       - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 8.0.x
-      - name: Start Sonarr (${{ matrix.tag }})
+          dotnet-version: 10.0.x
+      - name: Build release DLLs (Jellyfin 10.11 references, like the published package)
+        run: dotnet build src/Jellyfin.Plugin.Clearr -c Release -o out
+      - name: Start Jellyfin with the plugin installed
         run: |
-          mkdir -p "$RUNNER_TEMP/sonarr"
-          docker run -d --name sonarr -p 8989:8989 -e PUID=1000 -e PGID=1000 \
-            -v "$RUNNER_TEMP/sonarr:/config" lscr.io/linuxserver/sonarr:${{ matrix.tag }}
-          for i in $(seq 1 90); do
-            KEY=$(sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' "$RUNNER_TEMP/sonarr/config.xml" 2>/dev/null || true)
-            if [ -n "$KEY" ] && curl -sf -H "X-Api-Key: $KEY" http://localhost:8989/api/v3/system/status >/dev/null; then break; fi
-            sleep 2
-          done
-          [ -n "$KEY" ] || { docker logs sonarr; exit 1; }
-          docker exec sonarr sh -c 'mkdir -p /tv && chown 1000:1000 /tv'
-          echo "SONARR_API_KEY=$KEY" >> "$GITHUB_ENV"
-      - name: Run plugin's Sonarr calls against it
-        env:
-          SONARR_URL: http://localhost:8989
-        run: dotnet run --project tests/SonarrIntegration -p:UseStubs=true
-      - name: Sonarr log on failure
-        if: failure()
-        run: docker logs sonarr | tail -100
+          P="$RUNNER_TEMP/jf/plugins/Clearr_9.9.9.9"
+          mkdir -p "$P" "$RUNNER_TEMP/media"
+          cp out/Jellyfin.Plugin.Clearr.dll out/Clearr.Core.dll "$P/"
+          echo '{"guid":"94d2b53c-7f01-48dd-8726-c645ebe5ff9b","name":"Clearr","version":"9.9.9.9","targetAbi":"10.11.0.0","status":"Active","assemblies":["Jellyfin.Plugin.Clearr.dll","Clearr.Core.dll"]}' > "$P/meta.json"
+          docker run -d --name jellyfin -p 8096:8096 -v "$RUNNER_TEMP/jf:/config" -v "$RUNNER_TEMP/media:/media" jellyfin/jellyfin:${{ matrix.jellyfin }}
+      - name: Check the plugin
+        run: bash tests/jellyfin-load-test.sh http://localhost:8096
+      - name: Jellyfin log
+        if: always()
+        run: docker logs jellyfin 2>&1 | grep -iE "clearr|plugin|error" | tail -60
 
   report:
     name: Open issue on failure
-    needs: [jellyfin, logic-tests, sonarr]
-    if: failure() && github.event_name != 'push'
+    needs: [build, load]
+    if: failure()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v8
@@ -102,7 +86,7 @@ jobs:
           script: |
             const title = 'Compatibility check failed';
             const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const body = `The weekly compatibility check failed: ${run}\n\nOpen the run to see which Jellyfin or Sonarr version broke and the exact error.`;
+            const body = `The weekly compatibility check failed: ${run}\n\nOpen the run to see which Jellyfin version broke and the exact error.`;
             const open = await github.rest.issues.listForRepo({ ...context.repo, state: 'open', labels: 'compatibility' });
             const existing = open.data.find(i => i.title === title);
             if (existing) {
