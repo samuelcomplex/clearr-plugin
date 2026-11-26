@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.4",
+        "changelog": "Built from Clearr f2377da (https://github.com/samuelcomplex/clearr/commit/f2377da)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.4.zip",
+        "checksum": "d04f11f4df4911cad1675b94bbf74db0",
+        "timestamp": "2026-11-26T19:11:51Z"
+      },
+      {
         "version": "2.2.0.3",
         "changelog": "Built from Clearr 80eeaa1 (https://github.com/samuelcomplex/clearr/commit/80eeaa1)",
         "targetAbi": "10.11.0.0",
