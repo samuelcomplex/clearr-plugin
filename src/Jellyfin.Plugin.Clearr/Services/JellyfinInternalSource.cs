@@ -26,7 +26,7 @@ public class JellyfinInternalSource : ILibrarySource
 
     public Task<LibrarySnapshot> LoadAsync(CancellationToken ct)
     {
-        var users = _users.GetUsers().ToList();
+        var users = JellyfinCompat.AllUsers(_users).ToList();
         var lib = new LibrarySnapshot { Users = users.Select(u => new MediaUser(Key(u.Id), u.Username)).ToList() };
 
         var series = _library.GetItemList(new InternalItemsQuery { IncludeItemTypes = new[] { BaseItemKind.Series }, Recursive = true, IsVirtualItem = false }).OfType<Series>().ToList();

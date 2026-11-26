@@ -124,7 +124,7 @@ public class ClearrController : ControllerBase
     }
 
     [HttpGet("users")]
-    public ActionResult Users() => J(_host.Users.GetUsers().Select(u => new { id = JellyfinInternalSource.Key(u.Id), name = u.Username }));
+    public ActionResult Users() => J(JellyfinCompat.AllUsers(_host.Users).Select(u => new { id = JellyfinInternalSource.Key(u.Id), name = u.Username }));
 
     private ContentResult J(object value, int status = 200) => new()
     {
