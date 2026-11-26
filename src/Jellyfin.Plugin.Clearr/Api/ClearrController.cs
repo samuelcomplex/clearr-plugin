@@ -48,6 +48,7 @@ public class ClearrController : ControllerBase
             mode = s.Mode,
             lastRunAt = _host.LastRunAt,
             lastRunSummary = _host.LastRunSummary,
+            notice = _host.Settings.Notice,
         });
     }
 
