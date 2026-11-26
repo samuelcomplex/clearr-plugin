@@ -28,11 +28,11 @@ jobs:
           - { label: "newest release", version: "*",       tfm: net10.0, experimental: false }
           - { label: "pre-release",    version: "*-*",     tfm: net10.0, experimental: true }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
       - run: git submodule update --remote external/clearr
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             9.0.x
@@ -53,11 +53,11 @@ jobs:
           - { jellyfin: latest,     experimental: false }
           - { jellyfin: unstable,   experimental: true }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
       - run: git submodule update --remote external/clearr
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
       - name: Build release DLLs (Jellyfin 10.11 references, like the published package)
@@ -81,7 +81,7 @@ jobs:
     if: failure()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9
         with:
           script: |
             const title = 'Compatibility check failed';
