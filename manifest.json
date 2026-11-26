@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.8",
+        "changelog": "Built from Clearr 68c672a (https://github.com/samuelcomplex/clearr/commit/68c672a)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.8.zip",
+        "checksum": "de2003abecf753cafafab356b18a976b",
+        "timestamp": "2026-11-26T19:52:31Z"
+      },
+      {
         "version": "2.2.0.7",
         "changelog": "Built from Clearr 5221059 (https://github.com/samuelcomplex/clearr/commit/5221059)",
         "targetAbi": "10.11.0.0",
@@ -63,14 +71,6 @@
         "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.1.zip",
         "checksum": "af3e93f693ef492f8718f04448e0bbfe",
         "timestamp": "2026-11-26T18:15:12Z"
-      },
-      {
-        "version": "1.2.2.0",
-        "changelog": "Plugin logo bundled in the package, so it shows on the Plugins page right after installing.",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/watchtracker_1.2.2.0.zip",
-        "checksum": "e5986bee47d172ca599259a7928fdaed",
-        "timestamp": "2026-11-26T01:00:00Z"
       }
     ]
   }
