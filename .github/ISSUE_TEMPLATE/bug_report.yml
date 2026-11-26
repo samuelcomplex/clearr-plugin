@@ -1,0 +1,42 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! For security problems, use **Security → Report a vulnerability** instead.
+        If something was removed that shouldn't have been, say so first — those get looked at before anything else.
+  - type: input
+    id: version
+    attributes:
+      label: Clearr version
+      description: Dashboard → Plugins → Clearr.
+      placeholder: "2.2.0.4"
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Jellyfin, Sonarr and Radarr versions
+      placeholder: "Jellyfin 12.4.0, Sonarr 4.0.20, Radarr 5.20.0"
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Cleanup mode
+      options: [Off, Dry run, Delete]
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead. Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Jellyfin's Dashboard → Logs: the lines with "Clearr".
+        API keys are never written to the logs, but check for anything else private before pasting.
+      render: text

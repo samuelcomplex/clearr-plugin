@@ -2,6 +2,7 @@
 
 [![Sync with Clearr and release](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/release.yml)
 [![Compatibility check](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/compatibility.yml)
+[![Lint](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/lint.yml/badge.svg)](https://github.com/samuelcomplex/clearr-plugin/actions/workflows/lint.yml)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors)](https://github.com/sponsors/samuelcomplex)
 
 ![Clearr](https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png)
@@ -27,6 +28,8 @@ Both do the same thing. Pick one, and don't run both in Delete mode.
 
 Everything else is the same code: per-person progress, dropped-off viewers, Keep (with Sonarr/Radarr tags), grace period, newest-season protection, previews with sizes, the per-run size limit, the new-download guard and history. See the [Clearr README](https://github.com/samuelcomplex/clearr#readme) for how it decides.
 
+**Guides** (shared with the app): [Settings](https://github.com/samuelcomplex/clearr/blob/main/docs/settings.md) · [FAQ and troubleshooting](https://github.com/samuelcomplex/clearr/blob/main/docs/faq.md) · [Changelog](CHANGELOG.md)
+
 ## Install
 
 1. In Jellyfin, go to **Dashboard → Plugins → Repositories**, click **+** and add:
@@ -36,7 +39,7 @@ Everything else is the same code: per-person progress, dropped-off viewers, Keep
 
 It starts in **Dry run**. Nothing is ever removed unless *Cleanup mode* is **Delete**.
 
-Works with **Jellyfin 10.11 and 12.x** from one package.
+Works with **Jellyfin 10.11 and 12.x** from one package. Problems? The plugin logs to Jellyfin's own logs (*Dashboard → Logs*, lines starting with `Clearr`).
 
 ## The Jellyfin fallback (plugin only)
 
@@ -78,6 +81,8 @@ git clone --recursive https://github.com/samuelcomplex/clearr-plugin
 dotnet build src/Jellyfin.Plugin.Clearr -c Release                    # official Jellyfin 10.11 packages
 dotnet run --project tests/PluginTests -p:UseStubs=true               # offline tests against the stubs in stubs/
 ```
+
+Changes to the rules, the engine or the UI belong in [Clearr](https://github.com/samuelcomplex/clearr) (see its [CONTRIBUTING.md](https://github.com/samuelcomplex/clearr/blob/main/CONTRIBUTING.md)); this repo picks them up automatically. Security problems: see [SECURITY.md](SECURITY.md).
 
 ## Support
 

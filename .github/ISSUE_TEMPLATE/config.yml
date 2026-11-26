@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/samuelcomplex/clearr-plugin/security/advisories/new
+    about: Report it privately, please, not as a public issue.
+  - name: Something wasn't removed and you're not sure why
+    url: https://github.com/samuelcomplex/clearr/blob/main/docs/faq.md#why-wasnt-this-season-or-show-or-movie-removed
+    about: The FAQ explains every reason Clearr shows.
+  - name: The rules, the engine or the UI
+    url: https://github.com/samuelcomplex/clearr/issues
+    about: These live in the Clearr repo, shared by the app and the plugin.
