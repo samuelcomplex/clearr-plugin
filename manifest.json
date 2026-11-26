@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.2",
+        "changelog": "Built from Clearr bcc065e (https://github.com/samuelcomplex/clearr/commit/bcc065e)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/jellyfin-plugin-watchtracker/main/dist/clearr_2.2.0.2.zip",
+        "checksum": "6492561a0fb80c9d9d0a0acf27daef8b",
+        "timestamp": "2026-11-26T18:19:34Z"
+      },
+      {
         "version": "2.2.0.1",
         "changelog": "Built from Clearr bcc065e (https://github.com/samuelcomplex/clearr/commit/bcc065e)",
         "targetAbi": "10.11.0.0",
