@@ -34,12 +34,12 @@ jobs:
           before=$(git -C external/clearr rev-parse HEAD)
           git submodule update --remote external/clearr
           after=$(git -C external/clearr rev-parse HEAD)
-          echo "clearr=$(git -C external/clearr rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "clearr=$(git -C external/clearr rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
           if [ "$before" != "$after" ] || [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "release=true" >> $GITHUB_OUTPUT
+            echo "release=true" >> "$GITHUB_OUTPUT"
             echo "Clearr $before -> $after"
           else
-            echo "release=false" >> $GITHUB_OUTPUT
+            echo "release=false" >> "$GITHUB_OUTPUT"
             echo "Clearr unchanged ($after); nothing to release."
           fi
 
@@ -58,7 +58,7 @@ jobs:
         if: steps.sync.outputs.release == 'true'
         run: |
           V=$(python3 tools/package.py /dev/null --dry)
-          echo "VERSION=$V" >> $GITHUB_ENV
+          echo "VERSION=$V" >> "$GITHUB_ENV"
           dotnet build src/Jellyfin.Plugin.Clearr -c Release -o out "-p:Version=$V"
 
       - name: Package and publish
