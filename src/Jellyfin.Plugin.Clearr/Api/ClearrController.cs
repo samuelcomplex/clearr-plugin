@@ -163,6 +163,7 @@ public class ClearrController : ControllerBase
             {
                 "sonarr" => await new SonarrClient(client, c).TestAsync(ct).ConfigureAwait(false),
                 "radarr" => await new RadarrClient(client, c).TestAsync(ct).ConfigureAwait(false),
+                "seerr" => await new SeerrClient(client, c).TestAsync(ct).ConfigureAwait(false),
                 _ => throw new ArgumentException("Unknown service " + service),
             };
             return J(new { ok = true, message = msg });
