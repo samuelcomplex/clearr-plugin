@@ -116,6 +116,13 @@ public class ClearrController : ControllerBase
         return Content(o.ToJsonString(), "application/json");
     }
 
+    [HttpGet("rootfolders")]
+    public async Task<ActionResult> RootFolders(CancellationToken ct)
+    {
+        var (sonarr, radarr) = await _host.Engine.RootFoldersAsync(ct).ConfigureAwait(false);
+        return J(new { sonarr, radarr });
+    }
+
     [HttpPost("notifications/test")]
     public async Task<ActionResult> TestNotifications([FromBody] JsonObject? body, CancellationToken ct)
     {
