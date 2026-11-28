@@ -9,6 +9,14 @@
     "imageUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr/main/docs/logo/banner.png",
     "versions": [
       {
+        "version": "2.2.0.13",
+        "changelog": "Built from Clearr 0c4ab31 (https://github.com/samuelcomplex/clearr/commit/0c4ab31)",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.13.zip",
+        "checksum": "6cf66c5454e015ab6989d84f90601de6",
+        "timestamp": "2026-11-28T12:30:47Z"
+      },
+      {
         "version": "2.2.0.12",
         "changelog": "Built from Clearr 0c4ab31 (https://github.com/samuelcomplex/clearr/commit/0c4ab31)",
         "targetAbi": "10.11.0.0",
@@ -63,14 +71,6 @@
         "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.6.zip",
         "checksum": "8c1445bb3e8e46dad889927bf88b32c0",
         "timestamp": "2026-11-26T19:38:23Z"
-      },
-      {
-        "version": "2.2.0.5",
-        "changelog": "Built from Clearr 80c6e43 (https://github.com/samuelcomplex/clearr/commit/80c6e43)",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://raw.githubusercontent.com/samuelcomplex/clearr-plugin/main/dist/clearr_2.2.0.5.zip",
-        "checksum": "01124e697d1f8284634f04e5a8aafd19",
-        "timestamp": "2026-11-26T19:28:05Z"
       }
     ]
   }
