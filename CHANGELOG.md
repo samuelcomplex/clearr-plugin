@@ -10,7 +10,7 @@ Every release in Jellyfin's catalog also names the exact Clearr commit it was bu
 - The same engine and UI as the Clearr app, kept in sync automatically.
 - Optional removal **through Jellyfin** for items Sonarr/Radarr don't manage (off by default).
 - Two scheduled tasks, **Clear finished shows** and **Clear finished movies**, each following its own cleanup mode and with its own schedule in Jellyfin. Each only deletes in Delete mode, and the mode is checked again before every item.
-- English and Swedish, following your browser or the Language setting.
+- English and Swedish, following each Jellyfin user's own display language (English for languages Clearr doesn't have yet).
 - Settings notices (an upgrade, a damaged file) show at the top of the plugin page.
 - Works with Jellyfin 10.11 and 12.x from one package; tested weekly against real Jellyfin containers.
 

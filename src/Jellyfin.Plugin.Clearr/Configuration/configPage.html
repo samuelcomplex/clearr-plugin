@@ -62,6 +62,19 @@
             });
         }
 
+        // The Jellyfin user's display language (Settings → Display → Display language).
+        // When it's "Auto", Jellyfin uses the browser's language, and so does Clearr.
+        function jellyfinLanguage() {
+            var auto = navigator.language || 'en';
+            try {
+                return Promise.resolve(ApiClient.getDisplayPreferences('usersettings', ApiClient.getCurrentUserId(), 'emby'))
+                    .then(function (p) { return (p && p.CustomPrefs && p.CustomPrefs.language) || auto; })
+                    .catch(function () { return auto; });
+            } catch (e) {
+                return Promise.resolve(auto);
+            }
+        }
+
         function select(tab) {
             page.querySelectorAll('.clr-tab').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
             if (ui) ui.show(tab);
@@ -73,9 +86,10 @@
 
         page.addEventListener('pageshow', function () {
             page.querySelector('#clrLogo').src = url('ui/logo.svg');
-            Promise.all([load('css', url('ui/clearr-ui.css')), load('script', url('ui/clearr-ui.js'))]).then(function () {
+            Promise.all([load('css', url('ui/clearr-ui.css')), load('script', url('ui/clearr-ui.js')), jellyfinLanguage()]).then(function (loaded) {
                 ui = window.ClearrUI.mount(page.querySelector('#clrRoot'), {
                     host: 'plugin',
+                    language: loaded[2],
                     api: api,
                     onNavigate: select,
                     onReady: function () { window.ClearrUI.translate(page.querySelector('.clr-head')); }
