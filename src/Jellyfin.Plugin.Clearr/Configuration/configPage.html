@@ -63,16 +63,12 @@
         }
 
         // The Jellyfin user's display language (Settings → Display → Display language).
-        // When it's "Auto", Jellyfin uses the browser's language, and so does Clearr.
+        // Jellyfin keeps it per browser/device, in local storage as "<user id>-language" (empty = Auto).
+        // On Auto, Jellyfin uses the browser's language, and so does Clearr.
         function jellyfinLanguage() {
-            var auto = navigator.language || 'en';
-            try {
-                return Promise.resolve(ApiClient.getDisplayPreferences('usersettings', ApiClient.getCurrentUserId(), 'emby'))
-                    .then(function (p) { return (p && p.CustomPrefs && p.CustomPrefs.language) || auto; })
-                    .catch(function () { return auto; });
-            } catch (e) {
-                return Promise.resolve(auto);
-            }
+            var chosen = '';
+            try { chosen = localStorage.getItem(ApiClient.getCurrentUserId() + '-language') || ''; } catch (e) { chosen = ''; }
+            return Promise.resolve(chosen || navigator.language || 'en');
         }
 
         function select(tab) {
