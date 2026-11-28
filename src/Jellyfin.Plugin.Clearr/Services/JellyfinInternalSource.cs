@@ -103,6 +103,21 @@ public class JellyfinInternalSource : ILibrarySource
             }
         }
 
+        // Favourites (series, seasons, movies), per user.
+        var favouriteCandidates = series.Cast<BaseItem>().Concat(seasons.Values).Concat(movies).ToList();
+        foreach (var u in users)
+        {
+            ct.ThrowIfCancellationRequested();
+            var uid = Key(u.Id);
+            foreach (var it in favouriteCandidates)
+            {
+                if (_userData.GetUserData(u, it)?.IsFavorite == true)
+                {
+                    lib.AddFavorite(Key(it.Id), uid);
+                }
+            }
+        }
+
         return Task.FromResult(lib);
     }
 

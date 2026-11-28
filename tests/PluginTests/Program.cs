@@ -35,16 +35,22 @@ var movie = lib.AddMovie(root, "Some Movie", 2020, 603);
 data.Set(A, movie, true, now.AddDays(-20));
 data.Set(B, mEps.First(e => e.ParentIndexNumber == 2), false, now.AddDays(-2), ticks: 5_000_000);
 
+data.Favourite(B, whole);
+data.Favourite(A, mSeasons[1]);
+var favMovie = lib.AddMovie(root, "Favourite Movie", 2021, 604);
+data.Favourite(A, favMovie);
+
 var source = new JellyfinInternalSource(lib, users, data);
 var snap = await source.LoadAsync(default);
 var ms = snap.Shows.Single(s => s.Name == "Managed Show");
 Expect(snap.Users.Count == 2 && snap.Users[0].Id == A.Id.ToString("N"), "Users read, ids in Jellyfin API form (32 hex)");
 Expect(ms.Status == "Ended" && ms.ProviderIds["Tvdb"] == "81189" && ms.Seasons.Count == 2 && ms.Seasons.All(x => x.Episodes.Count == 2), "Show, status, provider ids, seasons and episodes read");
-Expect(snap.Movies.Single().Year == 2020 && snap.Movies.Single().ProviderIds["Tmdb"] == "603", "Movies read with year and TMDB id");
+Expect(snap.Movies.Single(m => m.Name == "Some Movie").Year == 2020 && snap.Movies.Single(m => m.Name == "Some Movie").ProviderIds["Tmdb"] == "603", "Movies read with year and TMDB id");
 Expect(snap.Get(mEps[0].Id.ToString("N"), A.Id.ToString("N"))?.Played == true, "Played state read");
 var partial = snap.Get(mEps.First(e => e.ParentIndexNumber == 2).Id.ToString("N"), B.Id.ToString("N"));
 Expect(partial is { Played: false, PositionTicks: 5_000_000 }, "Resume position read");
 Expect(snap.Get(mEps[3].Id.ToString("N"), A.Id.ToString("N")) == null, "Untouched items not listed");
+Expect(snap.Favorites[whole.Id.ToString("N")].SetEquals(new[] { B.Id.ToString("N") }) && snap.Favorites.ContainsKey(mSeasons[1].Id.ToString("N")) && snap.Favorites.ContainsKey(favMovie.Id.ToString("N")) && !snap.Favorites.ContainsKey(movie.Id.ToString("N")) && !snap.Favorites.ContainsKey(managed.Id.ToString("N")), "Favourite shows, seasons and movies read per user");
 source.RefreshAsync(default).Wait();
 Expect(lib.ScansQueued == 1, "Refresh queues a Jellyfin library scan");
 
@@ -120,6 +126,15 @@ var ui = api.Ui("clearr-ui.js") as FileStreamResult;
 Expect(ui != null && ui.ContentType.StartsWith("text/javascript"), "Shared UI script served by the plugin");
 Expect(api.Ui("lang-sv.json") is FileStreamResult { ContentType: var lt } && lt.StartsWith("application/json"), "Language files served by the plugin");
 
+var backup = Body(api.GetBackup());
+var jfBefore = host.Settings.Get().Jellyfin.Url;
+backup["settings"]!["graceDays"] = 11;
+backup["settings"]!["jellyfin"]!["url"] = "http://elsewhere:8096";
+backup["keep"] = new JsonArray("restored-id");
+var restored = api.RestoreBackup(backup);
+Expect(((ContentResult)restored).StatusCode == 200 && host.Settings.Get().GraceDays == 11 && host.Settings.Get().Jellyfin.Url == jfBefore && host.Keep.Contains("restored-id"), "Backup round trip through the plugin API; the Jellyfin connection is left alone");
+Expect(((ContentResult)api.RestoreBackup(JsonNode.Parse("{}"))).StatusCode == 400, "A file that isn't a backup is refused");
+
 await fake.StopAsync();
 Console.WriteLine(fails == 0 ? "\nALL PASSED" : $"\n{fails} FAILED");
 try { Directory.Delete(root, true); } catch { }
@@ -140,6 +155,7 @@ class FakeData : IUserDataManager
 {
     readonly Dictionary<(Guid, Guid), UserItemData> d = new();
     public void Set(User u, BaseItem i, bool played, DateTime at, long ticks = 0) => d[(u.Id, i.Id)] = new UserItemData { Played = played, LastPlayedDate = at, PlaybackPositionTicks = ticks };
+    public void Favourite(User u, BaseItem i) { if (!d.TryGetValue((u.Id, i.Id), out var x)) d[(u.Id, i.Id)] = x = new UserItemData(); x.IsFavorite = true; }
     public UserItemData? GetUserData(User user, BaseItem item) => d.TryGetValue((user.Id, item.Id), out var x) ? x : new UserItemData();
 }
 class FakeLib : ILibraryManager

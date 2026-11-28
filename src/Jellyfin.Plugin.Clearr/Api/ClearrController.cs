@@ -105,6 +105,22 @@ public class ClearrController : ControllerBase
         return J(new { ok = true });
     }
 
+    [HttpGet("backup")]
+    public ActionResult GetBackup() =>
+        J(Backup.Create(_host.Settings, _host.Keep, typeof(ClearrController).Assembly.GetName().Version?.ToString(3) ?? ""));
+
+    [HttpPost("backup/restore")]
+    public ActionResult RestoreBackup([FromBody] JsonNode? body)
+    {
+        var current = _host.Settings.Get();
+        var problem = Backup.Restore(body, _host.Settings, _host.Keep, s =>
+        {
+            s.Jellyfin = current.Jellyfin;   // the plugin talks to Jellyfin directly
+            s.Https = current.Https;
+        });
+        return problem == null ? J(new { ok = true }) : J(new { error = problem }, 400);
+    }
+
     [HttpPost("test/{service}")]
     public async Task<ActionResult> Test(string service, [FromBody] ConnectionSettings c, CancellationToken ct)
     {

@@ -73,6 +73,7 @@ namespace MediaBrowser.Controller.Entities
         public int PlayCount { get; set; }
         public DateTime? LastPlayedDate { get; set; }
         public bool Played { get; set; }
+        public bool IsFavorite { get; set; }
     }
 
     public class InternalItemsQuery

@@ -12,6 +12,8 @@ Every release in Jellyfin's catalog also names the exact Clearr commit it was bu
 - Two scheduled tasks, **Clear finished shows** and **Clear finished movies**, each following its own cleanup mode and with its own schedule in Jellyfin. Each only deletes in Delete mode, and the mode is checked again before every item.
 - English and Swedish, following each Jellyfin user's own display language (English for languages Clearr doesn't have yet).
 - Settings notices (an upgrade, a damaged file) show at the top of the plugin page.
+- Jellyfin favourites are kept automatically (series, seasons and movies; *Keep favourites*, on by default).
+- Backup and restore of settings and the keep list; restoring keeps the plugin's own Jellyfin connection.
 - Works with Jellyfin 10.11 and 12.x from one package; tested weekly against real Jellyfin containers.
 
 ## 1.x – Watch Tracker
