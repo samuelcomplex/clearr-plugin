@@ -80,7 +80,7 @@ _ = new TestPlugin(new Jellyfin.Plugin.Clearr.Configuration.PluginConfiguration
 });
 var host = new ClearrHost(new FakePaths(dataPath), lib, users, data, new Factory(), NullLoggerFactory.Instance);
 var st = host.Settings.Get();
-Expect(st.Mode == CleanupMode.DryRun && st.GraceDays == 3 && !st.DeleteShows && st.Sonarr.Url.EndsWith("/sonarr") && !st.AllowDirectDelete, "Migrated Watch Tracker settings (Jellyfin fallback left off)");
+Expect(st.ShowsMode == CleanupMode.DryRun && st.MoviesMode == CleanupMode.DryRun && st.GraceDays == 3 && !st.DeleteShows && st.Sonarr.Url.EndsWith("/sonarr") && !st.AllowDirectDelete, "Migrated Watch Tracker settings (Jellyfin fallback left off)");
 Expect(st.ExcludedUserIds.SequenceEqual(new[] { B.Id.ToString("N") }), "Migrated ignored users to Clearr's id form");
 Expect(host.Keep.Contains(flat.Id.ToString("N")), "Migrated Watch Tracker keep list");
 Expect(host.History.GetAll().Any(h => h.Title == "Old Show" && h.Kind == "Show"), "Migrated Watch Tracker history");
@@ -95,22 +95,30 @@ Expect(mShow["via"]!.GetValue<string>() == "Sonarr" && mShow["seasons"]![0]!["el
 Expect(shows.First(s => s!["name"]!.GetValue<string>() == "Flat Show")!["kept"]!.GetValue<bool>(), "Migrated keep applies in the report");
 Expect(rep["movies"]![0]!["via"] == null && !rep["movies"]![0]!["eligible"]!.GetValue<bool>(), "Unmanaged movie not removable while the fallback is off");
 
-var guard = (ContentResult)await api.Cleanup(false, default);
+var guard = (ContentResult)await api.Cleanup(false, null, default);
 Expect(guard.StatusCode == 409 && w.Log.Count == 0, "API refuses real cleanup in Dry run");
 var put = new JsonObject { ["settings"] = JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(host.Settings.Get(), Clearr.Storage.Json.Options)) };
 put["settings"]!["allowDirectDelete"] = true;
-put["settings"]!["mode"] = "Delete";
+put["settings"]!["showsMode"] = "Delete";
+put["settings"]!["moviesMode"] = "Delete";
 put["settings"]!["https"] = new JsonObject { ["enabled"] = true, ["port"] = 1 };
 Expect(((ContentResult)api.PutSettings(put)).StatusCode == 200 && host.Settings.Get().AllowDirectDelete && !host.Settings.Get().Https.Enabled, "Settings saved; app-only parts (HTTPS) ignored");
-var dry = Body(await api.Cleanup(true, default));
+var status = Body(api.Status());
+Expect(status["showsMode"]!.GetValue<string>() == "Delete" && status["moviesMode"]!.GetValue<string>() == "Delete" && status["language"] != null, "Status reports both modes and the language");
+var dry = Body(await api.Cleanup(true, null, default));
 var titles = dry["actions"]!.AsArray().Select(a => $"{a!["action"]} {a["title"]} {a["seasonName"]}").ToList();
 Console.WriteLine("  dry: " + string.Join(" | ", titles));
 Expect(titles.Contains("WouldDelete Managed Show Season 1") && titles.Any(t => t.StartsWith("WouldDelete Some Movie")), "Dry run: Sonarr season + Jellyfin-fallback movie");
-var real = Body(await api.Cleanup(false, default));
+var reason = dry["actions"]!.AsArray().First(a => a!["title"]!.GetValue<string>() == "Managed Show")!["parts"]![0]!;
+Expect(reason["code"]!.GetValue<string>() == "reason.ready", "Results carry translatable reasons");
+var tasks = typeof(ShowsCleanupTask).Assembly.GetTypes().Where(t => typeof(MediaBrowser.Model.Tasks.IScheduledTask).IsAssignableFrom(t) && !t.IsAbstract).Select(t => (MediaBrowser.Model.Tasks.IScheduledTask)Activator.CreateInstance(t, host)!).ToList();
+Expect(tasks.Select(t => t.Key).OrderBy(k => k).SequenceEqual(new[] { "ClearrMovies", "ClearrShows" }) && tasks.All(t => t.Category == "Clearr"), "Two scheduled tasks: Clear finished shows, Clear finished movies");
+var real = Body(await api.Cleanup(false, null, default));
 Expect(!w.EpisodeFiles.Any(f => f.SeriesId == 7 && f.Season == 1) && w.EpisodeFiles.Count(f => f.SeriesId == 7 && f.Season == 2) == 2, "Real run: Sonarr deleted season 1 files only");
 Expect(!File.Exists(movie.Path) && lib.ScansQueued >= 2, "Real run: unmanaged movie deleted through Jellyfin, library scan queued");
 var ui = api.Ui("clearr-ui.js") as FileStreamResult;
 Expect(ui != null && ui.ContentType.StartsWith("text/javascript"), "Shared UI script served by the plugin");
+Expect(api.Ui("lang-sv.json") is FileStreamResult { ContentType: var lt } && lt.StartsWith("application/json"), "Language files served by the plugin");
 
 await fake.StopAsync();
 Console.WriteLine(fails == 0 ? "\nALL PASSED" : $"\n{fails} FAILED");

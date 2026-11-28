@@ -21,10 +21,10 @@
                 <img id="clrLogo" alt="">
                 <h2>Clearr</h2>
                 <div class="clr-tabs">
-                    <button type="button" class="clr-tab active" data-tab="shows">Shows</button>
-                    <button type="button" class="clr-tab" data-tab="movies">Movies</button>
-                    <button type="button" class="clr-tab" data-tab="history">History</button>
-                    <button type="button" class="clr-tab" data-tab="settings">Settings</button>
+                    <button type="button" class="clr-tab active" data-tab="shows" data-i18n="nav.shows">Shows</button>
+                    <button type="button" class="clr-tab" data-tab="movies" data-i18n="nav.movies">Movies</button>
+                    <button type="button" class="clr-tab" data-tab="history" data-i18n="nav.history">History</button>
+                    <button type="button" class="clr-tab" data-tab="settings" data-i18n="nav.settings">Settings</button>
                 </div>
             </div>
             <div id="clrRoot">Loading Clearr…</div>
@@ -77,7 +77,8 @@
                 ui = window.ClearrUI.mount(page.querySelector('#clrRoot'), {
                     host: 'plugin',
                     api: api,
-                    onNavigate: select
+                    onNavigate: select,
+                    onReady: function () { window.ClearrUI.translate(page.querySelector('.clr-head')); }
                 });
                 select('shows');
             }).catch(function () {

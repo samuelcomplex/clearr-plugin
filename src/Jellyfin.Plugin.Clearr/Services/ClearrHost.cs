@@ -40,7 +40,7 @@ public class ClearrHost
 
     public DateTime? LastRunAt { get; set; }
 
-    public string? LastRunSummary { get; set; }
+    public Msg? LastRunSummary { get; set; }
 
     /// <summary>One-time move from Watch Tracker: settings (from the plugin XML), keep list and history.</summary>
     private void Migrate(string oldDir)
@@ -54,7 +54,7 @@ public class ClearrHost
         var old = Plugin.Instance?.Configuration;
         if (old != null)
         {
-            s.Mode = Enum.TryParse<CleanupMode>(old.Mode, true, out var m) ? m : CleanupMode.DryRun;
+            s.SetModes(Enum.TryParse<CleanupMode>(old.Mode, true, out var m) ? m : CleanupMode.DryRun);
             s.DeleteSeasons = old.DeleteSeasons;
             s.DeleteShows = old.DeleteSeries;
             s.RequireEndedForShowDelete = old.RequireEndedForSeriesDelete;

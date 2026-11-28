@@ -21,7 +21,7 @@ Both do the same thing. Pick one, and don't run both in Delete mode.
 |---|---|---|
 | Runs | As its own container, next to Sonarr/Radarr | Inside Jellyfin |
 | Reads progress | Jellyfin's API (needs an API key) | Jellyfin directly |
-| Daily run | Built-in schedule | *Dashboard → Scheduled Tasks → Clearr* |
+| Daily runs | Built-in schedules (shows and movies) | Two Jellyfin scheduled tasks: *Clear finished shows* and *Clear finished movies* |
 | Settings and UI | Its own web UI | *Dashboard → Clearr* (same UI) |
 | Password, API key, HTTPS | Yes | Not needed (Jellyfin handles sign-in) |
 | Removes | Through Sonarr/Radarr | Through Sonarr/Radarr, **plus an optional Jellyfin fallback** for items they don't manage |

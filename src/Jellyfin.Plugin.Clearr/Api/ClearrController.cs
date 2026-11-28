@@ -45,7 +45,9 @@ public class ClearrController : ControllerBase
             configured = true,
             passwordRequired = false,
             authenticated = true,
-            mode = s.Mode,
+            showsMode = s.ShowsMode,
+            moviesMode = s.MoviesMode,
+            language = s.Language,
             lastRunAt = _host.LastRunAt,
             lastRunSummary = _host.LastRunSummary,
             notice = _host.Settings.Notice,
@@ -60,9 +62,9 @@ public class ClearrController : ControllerBase
     }
 
     [HttpPost("cleanup")]
-    public async Task<ActionResult> Cleanup([FromQuery] bool dryRun = true, CancellationToken ct = default)
+    public async Task<ActionResult> Cleanup([FromQuery] bool dryRun = true, [FromQuery] string? scope = null, CancellationToken ct = default)
     {
-        var r = await _host.Engine.CleanupAsync(dryRun, record: !dryRun, ct).ConfigureAwait(false);
+        var r = await _host.Engine.CleanupAsync(dryRun, record: !dryRun, ct, CleanupScopes.Parse(scope)).ConfigureAwait(false);
         return J(r, r.Error != null ? 409 : 200);
     }
 

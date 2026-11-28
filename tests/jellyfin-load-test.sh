@@ -36,12 +36,13 @@ PLUGIN=$(curl -sf -H "Authorization: $AUTH" "$JF/Plugins" | jq -c '.[] | select(
 echo "Plugin: $PLUGIN"
 check "Plugin loaded and Active" '[ "$(echo "$PLUGIN" | jq -r .Status)" = "Active" ]'
 check "Dashboard page registered" 'curl -sf -H "Authorization: $AUTH" "$JF/web/ConfigurationPages" | jq -e ".[] | select(.Name==\"Clearr\")" >/dev/null'
-check "GET /Clearr/status" '[ "$(get Clearr/status)" = 200 ] && jq -e ".mode" /tmp/body >/dev/null'
+check "GET /Clearr/status" '[ "$(get Clearr/status)" = 200 ] && jq -e ".showsMode and .moviesMode" /tmp/body >/dev/null'
 check "GET /Clearr/report (empty library)" '[ "$(get Clearr/report)" = 200 ] && jq -e ".shows" /tmp/body >/dev/null'
-check "GET /Clearr/settings" '[ "$(get Clearr/settings)" = 200 ] && jq -e ".settings.mode == \"DryRun\"" /tmp/body >/dev/null'
+check "GET /Clearr/settings" '[ "$(get Clearr/settings)" = 200 ] && jq -e ".settings.showsMode == \"DryRun\" and .settings.moviesMode == \"DryRun\"" /tmp/body >/dev/null'
 check "GET /Clearr/users" '[ "$(get Clearr/users)" = 200 ] && jq -e "length >= 1" /tmp/body >/dev/null'
 check "Dry run guard: POST /Clearr/cleanup?dryRun=false refused" '[ "$(curl -s -o /tmp/body -w "%{http_code}" -X POST -H "Authorization: $AUTH" "$JF/Clearr/cleanup?dryRun=false")" = 409 ]'
 check "Shared UI served" '[ "$(curl -s -o /tmp/body -w "%{http_code}" "$JF/Clearr/ui/clearr-ui.js")" = 200 ] && grep -q ClearrUI /tmp/body'
 check "Admin-only API (anonymous refused)" '[ "$(curl -s -o /dev/null -w "%{http_code}" "$JF/Clearr/report")" = 401 ]'
-check "Scheduled task registered" 'curl -sf -H "Authorization: $AUTH" "$JF/ScheduledTasks" | jq -e ".[] | select(.Category==\"Clearr\")" >/dev/null'
+check "Scheduled tasks registered (shows and movies)" '[ "$(curl -sf -H "Authorization: $AUTH" "$JF/ScheduledTasks" | jq "[.[] | select(.Category==\"Clearr\")] | length")" = 2 ]'
+check "Language file served" '[ "$(curl -s -o /tmp/body -w "%{http_code}" "$JF/Clearr/ui/lang-sv.json")" = 200 ] && jq -e ".\"nav.shows\"" /tmp/body >/dev/null'
 exit $fail
