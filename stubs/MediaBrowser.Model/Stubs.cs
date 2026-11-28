@@ -35,3 +35,11 @@ namespace MediaBrowser.Model.Tasks
         public long? MaxRuntimeTicks { get; set; }
     }
 }
+
+namespace MediaBrowser.Model.Configuration
+{
+    public class ServerConfiguration
+    {
+        public string UICulture { get; set; } = "en-US";
+    }
+}

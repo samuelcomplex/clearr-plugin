@@ -109,3 +109,11 @@ namespace MediaBrowser.Controller.Entities.TV
         public SeriesStatus? Status { get; set; }
     }
 }
+
+namespace MediaBrowser.Controller.Configuration
+{
+    public interface IServerConfigurationManager
+    {
+        MediaBrowser.Model.Configuration.ServerConfiguration Configuration { get; }
+    }
+}

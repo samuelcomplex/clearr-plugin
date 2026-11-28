@@ -126,6 +126,10 @@ var ui = api.Ui("clearr-ui.js") as FileStreamResult;
 Expect(ui != null && ui.ContentType.StartsWith("text/javascript"), "Shared UI script served by the plugin");
 Expect(api.Ui("lang-sv.json") is FileStreamResult { ContentType: var lt } && lt.StartsWith("application/json"), "Language files served by the plugin");
 
+var summary = JsonNode.Parse(((ContentResult)api.Summary()).Content!)!;
+Expect(summary["removedTotal"]!.GetValue<int>() >= 2 && summary["freedTotalGb"] is not null && summary["showsMode"] is not null, "Summary endpoint for Home Assistant");
+Expect(((ContentResult)await api.TestNotifications(new JsonObject(), default)).StatusCode == 400, "Notification test without a target is refused");
+
 var backup = Body(api.GetBackup());
 var jfBefore = host.Settings.Get().Jellyfin.Url;
 backup["settings"]!["graceDays"] = 11;

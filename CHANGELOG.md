@@ -14,6 +14,7 @@ Every release in Jellyfin's catalog also names the exact Clearr commit it was bu
 - Settings notices (an upgrade, a damaged file) show at the top of the plugin page.
 - Jellyfin favourites are kept automatically (series, seasons and movies; *Keep favourites*, on by default).
 - Backup and restore of settings and the keep list; restoring keeps the plugin's own Jellyfin connection.
+- Notifications to ntfy, Discord or a webhook after each run, in the server's display language, and `/Clearr/summary` for a Home Assistant sensor.
 - Works with Jellyfin 10.11 and 12.x from one package; tested weekly against real Jellyfin containers.
 
 ## 1.x – Watch Tracker

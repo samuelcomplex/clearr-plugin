@@ -105,6 +105,30 @@ public class ClearrController : ControllerBase
         return J(new { ok = true });
     }
 
+    [HttpGet("summary")]
+    public ActionResult Summary()
+    {
+        var s = _host.Settings.Get();
+        var o = ClearrSummary.Build(_host.Engine.History(), s, DateTime.UtcNow);
+        o["lastRunAt"] = _host.LastRunAt;
+        o["lastRun"] = _host.LastRunSummary is Msg m ? Messages.Render(m, s.Language) : null;
+        o["version"] = typeof(ClearrController).Assembly.GetName().Version?.ToString(3);
+        return Content(o.ToJsonString(), "application/json");
+    }
+
+    [HttpPost("notifications/test")]
+    public async Task<ActionResult> TestNotifications([FromBody] JsonObject? body, CancellationToken ct)
+    {
+        var n = body?.Deserialize<NotificationSettings>(Json.Options) ?? _host.Settings.Get().Notifications;
+        if (!n.AnyTarget)
+        {
+            return J(new { error = "No notification target is set." }, 400);
+        }
+
+        var results = await _host.Engine.TestNotificationsAsync(n, ct).ConfigureAwait(false);
+        return J(new { results = results.Select(r => new { target = r.Target, error = r.Error }) });
+    }
+
     [HttpGet("backup")]
     public ActionResult GetBackup() =>
         J(Backup.Create(_host.Settings, _host.Keep, typeof(ClearrController).Assembly.GetName().Version?.ToString(3) ?? ""));

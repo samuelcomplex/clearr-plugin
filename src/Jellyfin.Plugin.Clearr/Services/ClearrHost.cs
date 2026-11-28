@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.Clearr.Services;
 /// <summary>Wires Clearr.Core into Jellyfin: stores in &lt;data&gt;/clearr, the internal library source and the Jellyfin fallback deleter.</summary>
 public class ClearrHost
 {
-    public ClearrHost(IApplicationPaths appPaths, ILibraryManager library, IUserManager users, IUserDataManager userData, IHttpClientFactory http, ILoggerFactory logs)
+    public ClearrHost(IApplicationPaths appPaths, ILibraryManager library, IUserManager users, IUserDataManager userData, IHttpClientFactory http, ILoggerFactory logs, MediaBrowser.Controller.Configuration.IServerConfigurationManager? serverConfig = null)
     {
         Log = logs.CreateLogger("Clearr");
         Paths = new ConfigPaths(Path.Combine(appPaths.DataPath, "clearr"));
@@ -21,7 +21,11 @@ public class ClearrHost
         Users = users;
         Migrate(Path.Combine(appPaths.DataPath, "watchtracker"));
 
-        Engine = new ClearrEngine(http, Settings.Get, new JellyfinInternalSource(library, users, userData), Keep, History, Log, new JellyfinDirectDeleter(library));
+        Engine = new ClearrEngine(http, Settings.Get, new JellyfinInternalSource(library, users, userData), Keep, History, Log, new JellyfinDirectDeleter(library))
+        {
+            // Notifications use the server's display language (Dashboard → General).
+            HostLanguage = () => serverConfig?.Configuration?.UICulture,
+        };
     }
 
     public ILogger Log { get; }
