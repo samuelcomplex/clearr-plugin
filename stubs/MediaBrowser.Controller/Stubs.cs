@@ -63,7 +63,12 @@ namespace MediaBrowser.Controller.Entities
         public virtual Task UpdateToRepositoryAsync(ItemUpdateType updateReason, CancellationToken cancellationToken) => Task.CompletedTask;
     }
 
-    public class Folder : BaseItem { }
+    public class Folder : BaseItem
+    {
+        public List<BaseItem> LinkedForTests { get; } = new();
+
+        public List<BaseItem> GetLinkedChildren() => LinkedForTests;
+    }
 
     public class Video : BaseItem { }
 
@@ -89,6 +94,25 @@ namespace MediaBrowser.Controller.Entities
 namespace MediaBrowser.Controller.Entities.Movies
 {
     public class Movie : Video { }
+
+    public class BoxSet : Folder { }
+}
+
+namespace MediaBrowser.Controller.Collections
+{
+    public class CollectionCreationOptions
+    {
+        public string Name { get; set; } = "";
+    }
+
+    public interface ICollectionManager
+    {
+        System.Threading.Tasks.Task<MediaBrowser.Controller.Entities.Movies.BoxSet> CreateCollectionAsync(CollectionCreationOptions options);
+
+        System.Threading.Tasks.Task AddToCollectionAsync(System.Guid collectionId, System.Collections.Generic.IEnumerable<System.Guid> itemIds);
+
+        System.Threading.Tasks.Task RemoveFromCollectionAsync(System.Guid collectionId, System.Collections.Generic.IEnumerable<System.Guid> itemIds);
+    }
 }
 
 namespace MediaBrowser.Controller.Entities.TV

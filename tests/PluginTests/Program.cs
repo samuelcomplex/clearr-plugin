@@ -130,6 +130,13 @@ var summary = JsonNode.Parse(((ContentResult)api.Summary()).Content!)!;
 Expect(summary["removedTotal"]!.GetValue<int>() >= 2 && summary["freedTotalGb"] is not null && summary["showsMode"] is not null, "Summary endpoint for Home Assistant");
 Expect(((ContentResult)await api.TestNotifications(new JsonObject(), default)).StatusCode == 400, "Notification test without a target is refused");
 
+var cols = new FakeCollections { Lib = lib };
+var colSource = new JellyfinInternalSource(lib, users, data, cols);
+var (cAdded, _) = await colSource.SyncCollectionAsync("Leaving soon", new[] { flat.Id.ToString("N"), favMovie.Id.ToString("N") }, default);
+var box = lib.Items.OfType<BoxSet>().Single();
+var (cAdded2, cRemoved) = await colSource.SyncCollectionAsync("Leaving soon", new[] { favMovie.Id.ToString("N") }, default);
+Expect(cAdded == 2 && cAdded2 == 0 && cRemoved == 1 && box.GetLinkedChildren().Select(i => i.Id).SequenceEqual(new[] { favMovie.Id }) && box.Name == "Leaving soon", "Leaving soon collection created and kept in step through Jellyfin's collection manager");
+
 var backup = Body(api.GetBackup());
 var jfBefore = host.Settings.Get().Jellyfin.Url;
 backup["settings"]!["graceDays"] = 11;
@@ -154,6 +161,14 @@ class FakeUsers : IUserManager
     public User Add(string n) { var u = new User { Id = Guid.NewGuid(), Username = n }; All.Add(u); return u; }
     public IEnumerable<User> GetUsers() => All;
     public User? GetUserById(Guid id) => All.FirstOrDefault(u => u.Id == id);
+}
+class FakeCollections : MediaBrowser.Controller.Collections.ICollectionManager
+{
+    public FakeLib Lib = null!;
+    public Task<BoxSet> CreateCollectionAsync(MediaBrowser.Controller.Collections.CollectionCreationOptions o) { var b = new BoxSet { Id = Guid.NewGuid(), Name = o.Name }; Lib.Items.Add(b); return Task.FromResult(b); }
+    BoxSet Box(Guid id) => Lib.Items.OfType<BoxSet>().Single(b => b.Id == id);
+    public Task AddToCollectionAsync(Guid id, IEnumerable<Guid> items) { Box(id).LinkedForTests.AddRange(items.Select(x => Lib.Items.Single(i => i.Id == x))); return Task.CompletedTask; }
+    public Task RemoveFromCollectionAsync(Guid id, IEnumerable<Guid> items) { var set = items.ToHashSet(); Box(id).LinkedForTests.RemoveAll(i => set.Contains(i.Id)); return Task.CompletedTask; }
 }
 class FakeData : IUserDataManager
 {
@@ -197,7 +212,7 @@ class FakeLib : ILibraryManager
     public IReadOnlyList<BaseItem> GetItemList(InternalItemsQuery q) => Items.Where(i =>
         (q.IncludeItemTypes.Length == 0 || q.IncludeItemTypes.Contains(Kind(i))) &&
         (q.AncestorIds.Length == 0 || (i is Episode e && q.AncestorIds.Contains(e.SeriesId)))).ToList();
-    static BaseItemKind Kind(BaseItem i) => i switch { Episode => BaseItemKind.Episode, Season => BaseItemKind.Season, Series => BaseItemKind.Series, Movie => BaseItemKind.Movie, _ => BaseItemKind.Folder };
+    static BaseItemKind Kind(BaseItem i) => i switch { BoxSet => BaseItemKind.BoxSet, Episode => BaseItemKind.Episode, Season => BaseItemKind.Season, Series => BaseItemKind.Series, Movie => BaseItemKind.Movie, _ => BaseItemKind.Folder };
     public void QueueLibraryScan() => ScansQueued++;
     public void DeleteItem(BaseItem item, DeleteOptions o, bool notify)
     {

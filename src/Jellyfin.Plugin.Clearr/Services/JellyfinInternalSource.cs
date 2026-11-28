@@ -8,14 +8,16 @@ using MediaBrowser.Controller.Library;
 namespace Jellyfin.Plugin.Clearr.Services;
 
 /// <summary>Builds Clearr's library snapshot straight from Jellyfin's internals (no API key needed).</summary>
-public class JellyfinInternalSource : ILibrarySource
+public class JellyfinInternalSource : ILibrarySource, ICollectionTarget
 {
     private readonly ILibraryManager _library;
     private readonly IUserManager _users;
     private readonly IUserDataManager _userData;
+    private readonly MediaBrowser.Controller.Collections.ICollectionManager? _collections;
 
-    public JellyfinInternalSource(ILibraryManager library, IUserManager users, IUserDataManager userData)
+    public JellyfinInternalSource(ILibraryManager library, IUserManager users, IUserDataManager userData, MediaBrowser.Controller.Collections.ICollectionManager? collections = null)
     {
+        _collections = collections;
         _library = library;
         _users = users;
         _userData = userData;
@@ -119,6 +121,43 @@ public class JellyfinInternalSource : ILibrarySource
         }
 
         return Task.FromResult(lib);
+    }
+
+    public async Task<(int Added, int Removed)> SyncCollectionAsync(string name, IReadOnlyCollection<string> itemIds, CancellationToken ct)
+    {
+        if (_collections is null)
+        {
+            throw new InvalidOperationException("Jellyfin's collection manager isn't available");
+        }
+
+        var wanted = itemIds.Select(x => Guid.TryParse(x, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToHashSet();
+        var box = _library.GetItemList(new InternalItemsQuery { IncludeItemTypes = new[] { BaseItemKind.BoxSet }, Recursive = true })
+            .OfType<BoxSet>()
+            .FirstOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (box is null)
+        {
+            if (wanted.Count == 0)
+            {
+                return (0, 0);
+            }
+
+            box = await _collections.CreateCollectionAsync(new MediaBrowser.Controller.Collections.CollectionCreationOptions { Name = name }).ConfigureAwait(false);
+        }
+
+        var members = box.GetLinkedChildren().Select(c => c.Id).ToHashSet();
+        var add = wanted.Where(x => !members.Contains(x)).ToList();
+        var remove = members.Where(x => !wanted.Contains(x)).ToList();
+        if (add.Count > 0)
+        {
+            await _collections.AddToCollectionAsync(box.Id, add).ConfigureAwait(false);
+        }
+
+        if (remove.Count > 0)
+        {
+            await _collections.RemoveFromCollectionAsync(box.Id, remove).ConfigureAwait(false);
+        }
+
+        return (add.Count, remove.Count);
     }
 
     public Task RefreshAsync(CancellationToken ct)

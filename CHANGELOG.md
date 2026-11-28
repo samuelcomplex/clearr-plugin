@@ -16,6 +16,7 @@ Every release in Jellyfin's catalog also names the exact Clearr commit it was bu
 - Backup and restore of settings and the keep list; restoring keeps the plugin's own Jellyfin connection.
 - Whole Sonarr/Radarr root folders can be kept from Settings, and an optional free-space target only cleans up drives that are running low.
 - Statistics on the History page, and an optional Seerr connection (removed shows and movies are removed there too).
+- Optional **Leaving soon** collection with what will be removed once its grace period ends.
 - Notifications to ntfy, Discord or a webhook after each run, in the server's display language, and `/Clearr/summary` for a Home Assistant sensor.
 - Works with Jellyfin 10.11 and 12.x from one package; tested weekly against real Jellyfin containers.
 
